@@ -1,0 +1,10 @@
+# Usage:
+#   python -m pip install -r requirements.txt
+#   pip install -r requirements.txt
+
+fg-data-profiling==4.19.1
+matplotlib==3.10.0
+numpy==2.3.*
+pandas==2.3.*
+seaborn==0.13.*
+setuptools<82
