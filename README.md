@@ -165,3 +165,11 @@ From Windows Command Prompt:
 ```cmd
 powershell -File .\tools\Get-AutoMLTrialSummary.ps1 -JobName <AUTOML_JOB_NAME>
 ```
+
+## Compare manual and AutoML training runs
+
+All jobs (manual, AutoML trials) log to the same `gp-mof-capstone` MLflow experiment. Run this any time, after any new job submission, to print all runs' params/metrics side by side in the console:
+
+```cmd
+python .\tools\compare_runs.py
+```
