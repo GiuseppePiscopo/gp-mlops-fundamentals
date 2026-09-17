@@ -26,8 +26,10 @@ RAI_TARGET_COLUMN = "Rented_Bike_Count"
 def prepare_data(df):
     df = df.drop(columns=DROP_COLUMNS)
     df = df.rename(columns={TARGET_COLUMN: RAI_TARGET_COLUMN})
-    # same encoding the model was trained on, so RAI can call model.predict() on these rows directly
-    df = pd.get_dummies(df, columns=CATEGORICAL_COLUMNS, drop_first=True)
+    # same encoding the model was trained on, so RAI can call model.predict() on these rows directly.
+    # dtype=int (not the pandas default bool): RAI's validation rejects non-numeric columns
+    # unless declared in categorical_column_names
+    df = pd.get_dummies(df, columns=CATEGORICAL_COLUMNS, drop_first=True, dtype=int)
 
     # same random_state/test_size as common.training_utils.prepare_data, kept as a DataFrame
     # (prepare_data returns numpy arrays, which would lose the column names the RAI dashboard needs)
