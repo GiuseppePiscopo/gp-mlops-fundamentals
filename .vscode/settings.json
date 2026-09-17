@@ -21,6 +21,13 @@
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.formatOnSave": true
   },
+  "[yaml]": {
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "never",
+      "source.organizeImports.ruff": "never"
+    }
+  },
   "notebook.output.wordWrap": true,
   "notebook.formatOnSave.enabled": true
 }

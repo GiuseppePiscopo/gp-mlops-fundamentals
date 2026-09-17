@@ -1,0 +1,9 @@
+$schema: https://azuremlschemas.azureedge.net/latest/amlCompute.schema.json
+name: gp-mof-capstone-compute
+type: amlcompute
+tier: dedicated
+size: Standard_D2_v3
+description: Azure ML compute cluster for MLOps Fundamentals capstone project.
+min_instances: 0
+max_instances: 2
+idle_time_before_scale_down: 120
