@@ -1,12 +1,9 @@
-import argparse
 import glob
 import os
 
 import mlflow
-import mlflow.sklearn
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import Ridge
 from sklearn.metrics import (
     mean_absolute_error,
     mean_absolute_percentage_error,
@@ -21,38 +18,6 @@ CATEGORICAL_COLUMNS = ["Seasons", "Holiday", "Functioning Day"]
 DROP_COLUMNS = ["Date"]
 # fixed across scripts so runs stay comparable in MLflow
 RANDOM_SEED = 42
-
-
-def parse_args():
-    # setup arg parser
-    parser = argparse.ArgumentParser()
-
-    # add arguments
-    parser.add_argument("--training_data", dest="training_data", type=str)
-    parser.add_argument("--alpha", dest="alpha", type=float, default=1.0)
-
-    # parse args
-    args = parser.parse_args()
-
-    # return args
-    return args
-
-
-def main(args):
-    with mlflow.start_run():
-        # read data
-        df = get_data(args.training_data)
-
-        # prepare data
-        X_train, X_test, y_train, y_test = prepare_data(df)
-
-        # train model
-        model = train_model(args.alpha, X_train, y_train)
-
-        # evaluate model
-        eval_model(model, X_test, y_test)
-
-        mlflow.sklearn.log_model(model, artifact_path="model")
 
 
 def get_data(path):
@@ -84,16 +49,6 @@ def prepare_data(df):
     return X_train, X_test, y_train, y_test
 
 
-def train_model(alpha, X_train, y_train):
-    mlflow.log_param("alpha", alpha)
-
-    print("Training model...")
-
-    model = Ridge(alpha=alpha, random_state=RANDOM_SEED).fit(X_train, y_train)
-
-    return model
-
-
 def eval_model(model, X_test, y_test):
     y_hat = model.predict(X_test)
 
@@ -113,20 +68,3 @@ def eval_model(model, X_test, y_test):
     mlflow.log_metric("RMSE", rmse)
     mlflow.log_metric("R2", r2)
     mlflow.log_metric("MAPE", mape)
-
-
-# run script
-if __name__ == "__main__":
-    # add space in logs
-    print("\n\n")
-    print("*" * 60)
-
-    # parse args
-    args = parse_args()
-
-    # run main function
-    main(args)
-
-    # add space in logs
-    print("*" * 60)
-    print("\n\n")

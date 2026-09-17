@@ -7,7 +7,7 @@ description: Ridge regression training for MLOps Fundamentals capstone project.
 
 code: ../src
 command: >-
-  python train_ridge.py
+  python -m ridge.train
   --training_data ${{inputs.training_data}}
   --alpha ${{inputs.alpha}}
 

@@ -7,7 +7,7 @@ description: Random Forest training for MLOps Fundamentals capstone project.
 
 code: ../src
 command: >-
-  python train_rf.py
+  python -m random_forest.train
   --training_data ${{inputs.training_data}}
   --n_estimators ${{inputs.n_estimators}}
   --max_depth ${{inputs.max_depth}}

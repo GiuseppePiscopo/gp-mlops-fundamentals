@@ -59,10 +59,14 @@ az ml environment create --file .\config\gp-mof-capstone-env.yml
 Run the following command to execute a training script locally:
 
 ```cmd
-python ./src/train_ridge.py --training_data ./data/sample/ --alpha 1.0
+cd ./src
 
-python ./src/train_rf.py --training_data ./data/sample/ --n_estimators 100 --max_depth 10
+python -m ridge.train --training_data ../data/sample/ --alpha 1.0
+
+python -m random_forest.train --training_data ../data/sample/ --n_estimators 100 --max_depth 10
 ```
+
+Run these from inside the `src/` folder, since the `common` module is resolved relative to the current working directory.
 
 ## Create data asset in Azure Machine Learning
 
