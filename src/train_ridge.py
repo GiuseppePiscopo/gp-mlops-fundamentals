@@ -3,6 +3,7 @@ import glob
 import os
 
 import mlflow
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import Ridge
@@ -38,17 +39,20 @@ def parse_args():
 
 
 def main(args):
-    # read data
-    df = get_data(args.training_data)
+    with mlflow.start_run():
+        # read data
+        df = get_data(args.training_data)
 
-    # prepare data
-    X_train, X_test, y_train, y_test = prepare_data(df)
+        # prepare data
+        X_train, X_test, y_train, y_test = prepare_data(df)
 
-    # train model
-    model = train_model(args.alpha, X_train, y_train)
+        # train model
+        model = train_model(args.alpha, X_train, y_train)
 
-    # evaluate model
-    eval_model(model, X_test, y_test)
+        # evaluate model
+        eval_model(model, X_test, y_test)
+
+        mlflow.sklearn.log_model(model, artifact_path="model")
 
 
 def get_data(path):
