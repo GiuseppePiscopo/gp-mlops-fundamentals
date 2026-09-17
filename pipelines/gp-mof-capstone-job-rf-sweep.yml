@@ -1,0 +1,40 @@
+$schema: https://azuremlschemas.azureedge.net/latest/sweepJob.schema.json
+type: sweep
+display_name: gp-mof-capstone-rf-sweep
+experiment_name: gp-mof-capstone
+description: Sweep job for Random Forest hyperparameter tuning (n_estimators/max_depth) in the MLOps Fundamentals capstone project.
+
+compute: azureml:gp-mof-capstone-compute
+
+trial:
+  code: ../src
+  command: >-
+    python -m random_forest.train
+    --training_data ${{inputs.training_data}}
+    --n_estimators ${{search_space.n_estimators}}
+    --max_depth ${{search_space.max_depth}}
+  environment: azureml:gp-mof-capstone-env:2
+
+inputs:
+  training_data:
+    type: uri_folder
+    path: azureml:gp-mof-capstone-data:1
+
+sampling_algorithm: grid
+search_space:
+  n_estimators:
+    type: choice
+    values: [50, 100, 300]
+  max_depth:
+    type: choice
+    values: [5, 10, 20]
+
+objective:
+  goal: maximize
+  primary_metric: R2
+
+limits:
+  max_total_trials: 9
+  max_concurrent_trials: 2
+  timeout: 7200
+

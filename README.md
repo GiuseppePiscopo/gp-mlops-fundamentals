@@ -225,3 +225,11 @@ Promote the registered best model to the staging environment:
 ```cmd
 az ml model update --name gp-mof-capstone-model --version 1 --set properties.stage=staging
 ```
+
+## Run sweep job to tune hyperparameters in Azure ML
+
+Run the following command to start the hyperparameter sweep job:
+
+```cmd
+az ml job create --file .\pipelines\gp-mof-capstone-job-rf-sweep.yml
+```
