@@ -33,8 +33,8 @@ jobs:
       train_dataset: ${{parent.inputs.my_training_data}}
       test_dataset: ${{parent.inputs.my_test_data}}
       target_column_name: ${{parent.inputs.target_column_name}}
-      # already one-hot encoded upstream (tools/prepare_rai_data.py), so no raw categoricals remain
-      categorical_column_names: '[]'
+      # MLTable infers these one-hot columns (0/1 only) as boolean, so RAI requires them declared explicitly
+      categorical_column_names: '["Seasons_Spring", "Seasons_Summer", "Seasons_Winter", "Holiday_No Holiday", "Functioning Day_Yes"]'
 
   explain_job:
     type: command
