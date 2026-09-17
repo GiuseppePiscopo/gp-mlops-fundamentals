@@ -1,0 +1,29 @@
+$schema: https://azuremlsdk2.blob.core.windows.net/preview/0.0.1/autoMLJob.schema.json
+type: automl
+task: regression
+display_name: gp-mof-capstone-automl
+experiment_name: gp-mof-capstone
+description: AutoML regression job for bike sharing demand prediction, restricted to a small algorithm set and time budget to keep the lab run short.
+
+compute: azureml:gp-mof-capstone-compute
+
+training_data:
+  type: mltable
+  path: azureml:gp-mof-capstone-data-mltable:1
+
+target_column_name: "Rented Bike Count"
+primary_metric: normalized_root_mean_squared_error
+n_cross_validations: 5
+
+limits:
+  max_trials: 10
+  # matches compute max_instances, so no trials sit queued waiting for a node
+  max_concurrent_trials: 2
+  timeout_minutes: 30
+  trial_timeout_minutes: 10
+
+training:
+  allowed_training_algorithms:
+    - elastic_net
+    - light_gbm
+    - random_forest

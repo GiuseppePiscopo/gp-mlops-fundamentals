@@ -125,3 +125,43 @@ More trees, higher capacity usage:
 ```cmd
 az ml job create --file .\pipelines\gp-mof-capstone-job-rf.yml --set inputs.n_estimators=300 --set inputs.max_depth=20
 ```
+
+## Run an AutoML job in Azure Machine Learning
+
+Confirm the MLTable data asset doesn't already exist:
+
+```cmd
+az ml data show --name gp-mof-capstone-data-mltable --version 1
+```
+
+Run the following command to register the MLTable data asset:
+
+```cmd
+az ml data create --file .\config\gp-mof-capstone-data-mltable.yml
+```
+
+Run the following command to launch the AutoML job:
+
+```cmd
+az ml job create --file .\pipelines\gp-mof-capstone-job-automl.yml
+```
+
+Compare the AutoML best run's metrics against the manual Ridge/Random Forest runs in Azure ML Studio.
+
+## Inspect AutoML job results
+
+Once completed, you can explore the details of the AutoML job and find the best run's metrics and artifacts.
+
+If the AutoML job shows no data in the "Models + child jobs" tab (e.g. child runs failed after logging metrics), run this to get a trial comparison table from the job tags via CLI:
+
+From a PowerShell console:
+
+```powershell
+.\tools\Get-AutoMLTrialSummary.ps1 -JobName <AUTOML_JOB_NAME>
+```
+
+From Windows Command Prompt:
+
+```cmd
+powershell -File .\tools\Get-AutoMLTrialSummary.ps1 -JobName <AUTOML_JOB_NAME>
+```

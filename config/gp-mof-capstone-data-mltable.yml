@@ -1,0 +1,7 @@
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+name: gp-mof-capstone-data-mltable
+version: 1
+type: mltable
+path: ../data/sample
+datastore: azureml:workspaceblobstore
+description: MLTable data asset for AutoML jobs in the MLOps Fundamentals capstone project.
