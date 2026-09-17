@@ -63,3 +63,45 @@ python ./src/train_ridge.py --training_data ./data/sample/ --alpha 1.0
 
 python ./src/train_rf.py --training_data ./data/sample/ --n_estimators 100 --max_depth 10
 ```
+
+## Create data asset in Azure Machine Learning
+
+Confirm the data asset doesn't already exist:
+
+```cmd
+az ml data show --name gp-mof-capstone-data --version 1
+```
+
+Run the following command to create a data asset in Azure Machine Learning:
+
+```cmd
+az ml data create --file .\config\gp-mof-capstone-data.yml
+```
+
+## Run training job in Azure Machine Learning
+
+Run the Ridge regression training job in Azure Machine Learning:
+
+```cmd
+az ml job create --file .\pipelines\gp-mof-capstone-job-ridge.yml
+```
+
+Run the Random Forest training job in Azure Machine Learning:
+
+```cmd
+az ml job create --file .\pipelines\gp-mof-capstone-job-rf.yml
+```
+
+## Check training job status
+
+Run the following command to check the status of the most recently submitted job for the experiment:
+
+```cmd
+az ml job list -o table --experiment-name gp-mof-capstone
+```
+
+Alternatively, look for `name` in the output of the `az ml job create` command, e.g. `"name": "gifted_kiwi_x7y2z..."`. Then use it to check the job status:
+
+```cmd
+az ml job show --name <JOB_NAME>
+```
