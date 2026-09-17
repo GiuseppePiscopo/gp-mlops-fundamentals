@@ -109,3 +109,19 @@ Alternatively, look for `name` in the output of the `az ml job create` command, 
 ```cmd
 az ml job show --name <JOB_NAME>
 ```
+
+## Run training job with different parameters in Azure Machine Learning
+
+Run the Random Forest training job with different parameters in Azure Machine Learning, to obtain 3 different models in total.
+
+Quicker training, less capacity usage:
+
+```cmd
+az ml job create --file .\pipelines\gp-mof-capstone-job-rf.yml --set inputs.n_estimators=50 --set inputs.max_depth=5
+```
+
+More trees, higher capacity usage:
+
+```cmd
+az ml job create --file .\pipelines\gp-mof-capstone-job-rf.yml --set inputs.n_estimators=300 --set inputs.max_depth=20
+```
