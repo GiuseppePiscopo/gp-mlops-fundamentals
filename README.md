@@ -217,3 +217,11 @@ az ml job create --file .\pipelines\gp-mof-capstone-job-rai.yml
 ```
 
 Once completed, open the registered model (`gp-mof-capstone-model`) in Azure ML Studio and go to its "Responsible AI" tab to explore the dashboard.
+
+## Promote best model to staging environment
+
+Promote the registered best model to the staging environment:
+
+```cmd
+az ml model update --name gp-mof-capstone-model --version 1 --set properties.stage=staging
+```
