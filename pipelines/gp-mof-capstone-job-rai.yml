@@ -1,0 +1,63 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+experiment_name: gp-mof-capstone
+display_name: gp-mof-capstone-rai
+description: Responsible AI dashboard (explanation + error analysis) for the registered best model in the MLOps Fundamentals capstone project.
+
+compute: azureml:gp-mof-capstone-compute
+
+inputs:
+  target_column_name: "Rented Bike Count"
+  my_training_data:
+    type: mltable
+    path: azureml:gp-mof-capstone-data-rai-train:1
+  my_test_data:
+    type: mltable
+    path: azureml:gp-mof-capstone-data-rai-test:1
+
+settings:
+  default_datastore: azureml:workspaceblobstore
+  continue_on_step_failure: false
+
+jobs:
+  create_rai_job:
+    type: command
+    component: azureml://registries/azureml/components/rai_tabular_insight_constructor/versions/0.22.0
+    inputs:
+      title: gp-mof-capstone-rai-insights
+      task_type: regression
+      model_info: gp-mof-capstone-model:1
+      model_input:
+        type: mlflow_model
+        path: azureml:gp-mof-capstone-model:1
+      train_dataset: ${{parent.inputs.my_training_data}}
+      test_dataset: ${{parent.inputs.my_test_data}}
+      target_column_name: ${{parent.inputs.target_column_name}}
+      # already one-hot encoded upstream (tools/prepare_rai_data.py), so no raw categoricals remain
+      categorical_column_names: '[]'
+
+  explain_job:
+    type: command
+    component: azureml://registries/azureml/components/rai_tabular_explanation/versions/0.22.0
+    inputs:
+      comment: gp-mof-capstone explanation
+      rai_insights_dashboard: ${{parent.jobs.create_rai_job.outputs.rai_insights_dashboard}}
+
+  error_analysis_job:
+    type: command
+    component: azureml://registries/azureml/components/rai_tabular_erroranalysis/versions/0.22.0
+    inputs:
+      rai_insights_dashboard: ${{parent.jobs.create_rai_job.outputs.rai_insights_dashboard}}
+
+  gather_job:
+    type: command
+    component: azureml://registries/azureml/components/rai_tabular_insight_gather/versions/0.22.0
+    inputs:
+      constructor: ${{parent.jobs.create_rai_job.outputs.rai_insights_dashboard}}
+      insight_1: ${{parent.jobs.explain_job.outputs.explanation}}
+      insight_2: ${{parent.jobs.error_analysis_job.outputs.error_analysis}}
+    outputs:
+      dashboard:
+        type: uri_folder
+      ux_json:
+        type: uri_folder

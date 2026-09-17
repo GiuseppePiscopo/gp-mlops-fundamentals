@@ -63,3 +63,7 @@ venv/
 # MLflow runs data
 mlruns/
 mlflow.db
+
+# Local data for Responsible AI dashboard
+data/rai-train/
+data/rai-test/

@@ -1,0 +1,7 @@
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+name: gp-mof-capstone-data-rai-test
+version: 1
+type: mltable
+path: ../data/rai-test
+datastore: azureml:workspaceblobstore
+description: Test split (same encoding/seed as the registered model) for the Responsible AI dashboard in the MLOps Fundamentals capstone project.

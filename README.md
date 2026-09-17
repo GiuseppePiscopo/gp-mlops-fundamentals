@@ -173,3 +173,47 @@ All jobs (manual, AutoML trials) log to the same `gp-mof-capstone` MLflow experi
 ```cmd
 python .\tools\compare_runs.py
 ```
+
+## Register the best model for the Responsible AI dashboard
+
+Find the model run with the best metrics (e.g. via `python .\tools\compare_runs.py`), then register its logged model as a named model asset:
+
+```cmd
+az ml model create --name gp-mof-capstone-model --version 1 --path azureml://jobs/<BEST_JOB_NAME>/outputs/artifacts/model --type mlflow_model
+```
+
+## Create data assets for Responsible AI dashboard in Azure ML
+
+The dashboard needs separate train/test datasets, matching the same split/encoding the registered model was trained on.
+
+Confirm the MLTable data assets don't already exist:
+
+```cmd
+az ml data show --name gp-mof-capstone-data-rai-train --version 1
+
+az ml data show --name gp-mof-capstone-data-rai-test --version 1
+```
+
+Run the following command to generate them locally:
+
+```cmd
+python .\tools\prepare_rai_data.py
+```
+
+Register them as MLTable data assets:
+
+```cmd
+az ml data create --file .\config\gp-mof-capstone-data-rai-train.yml
+
+az ml data create --file .\config\gp-mof-capstone-data-rai-test.yml
+```
+
+## Run the job for the Responsible AI dashboard
+
+Run the Responsible AI pipeline against the registered model:
+
+```cmd
+az ml job create --file .\pipelines\gp-mof-capstone-job-rai.yml
+```
+
+Once completed, open the registered model (`gp-mof-capstone-model`) in Azure ML Studio and go to its "Responsible AI" tab to explore the dashboard.
