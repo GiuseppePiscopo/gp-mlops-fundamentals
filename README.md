@@ -189,9 +189,9 @@ The dashboard needs separate train/test datasets, matching the same split/encodi
 Confirm the MLTable data assets don't already exist:
 
 ```cmd
-az ml data show --name gp-mof-capstone-data-rai-train --version 1
+az ml data show --name gp-mof-capstone-data-rai-train --version 2
 
-az ml data show --name gp-mof-capstone-data-rai-test --version 1
+az ml data show --name gp-mof-capstone-data-rai-test --version 2
 ```
 
 Run the following command to generate them locally:

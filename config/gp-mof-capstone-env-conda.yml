@@ -6,7 +6,8 @@ dependencies:
   - python=3.11
   - pip=24.0
   - pip:
-      - numpy==2.2.6
+      # pinned <2.0: RAI dashboard's curated environment can't unpickle models saved with numpy 2.x
+      - numpy==1.26.4
       - pandas==2.2.3
       - scikit-learn==1.6.1
       # gradient boosting baseline, complements sklearn's RandomForest/HistGradientBoosting

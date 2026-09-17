@@ -17,5 +17,5 @@ inputs:
     path: azureml:gp-mof-capstone-data:1
   alpha: 1.0
 
-environment: azureml:gp-mof-capstone-env:1
+environment: azureml:gp-mof-capstone-env:2
 compute: azureml:gp-mof-capstone-compute

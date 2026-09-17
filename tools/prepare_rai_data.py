@@ -13,16 +13,19 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from common.training_utils import CATEGORICAL_COLUMNS, DROP_COLUMNS, RANDOM_SEED, get_data  # noqa: E402
+from common.training_utils import CATEGORICAL_COLUMNS, DROP_COLUMNS, RANDOM_SEED, TARGET_COLUMN, get_data  # noqa: E402
 
 SOURCE_CSV = "data/sample/SeoulBikeData.csv"
 TRAIN_DIR = "data/rai-train"
 TEST_DIR = "data/rai-test"
 MLTABLE_TEMPLATE = os.path.join(os.path.dirname(__file__), "..", "config", "rai-mltable-template", "MLTable")
+# the RAI component passes target_column_name as a CLI arg without quoting, so spaces break its argparse
+RAI_TARGET_COLUMN = "Rented_Bike_Count"
 
 
 def prepare_data(df):
     df = df.drop(columns=DROP_COLUMNS)
+    df = df.rename(columns={TARGET_COLUMN: RAI_TARGET_COLUMN})
     # same encoding the model was trained on, so RAI can call model.predict() on these rows directly
     df = pd.get_dummies(df, columns=CATEGORICAL_COLUMNS, drop_first=True)
 

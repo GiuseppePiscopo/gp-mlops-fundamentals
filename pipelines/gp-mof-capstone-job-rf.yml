@@ -19,5 +19,5 @@ inputs:
   n_estimators: 100
   max_depth: 10
 
-environment: azureml:gp-mof-capstone-env:1
+environment: azureml:gp-mof-capstone-env:2
 compute: azureml:gp-mof-capstone-compute

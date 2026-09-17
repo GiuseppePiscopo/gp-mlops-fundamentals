@@ -7,13 +7,13 @@ description: Responsible AI dashboard (explanation + error analysis) for the reg
 compute: azureml:gp-mof-capstone-compute
 
 inputs:
-  target_column_name: "Rented Bike Count"
+  target_column_name: "Rented_Bike_Count"
   my_training_data:
     type: mltable
-    path: azureml:gp-mof-capstone-data-rai-train:1
+    path: azureml:gp-mof-capstone-data-rai-train:2
   my_test_data:
     type: mltable
-    path: azureml:gp-mof-capstone-data-rai-test:1
+    path: azureml:gp-mof-capstone-data-rai-test:2
 
 settings:
   default_datastore: azureml:workspaceblobstore
@@ -26,10 +26,10 @@ jobs:
     inputs:
       title: gp-mof-capstone-rai-insights
       task_type: regression
-      model_info: gp-mof-capstone-model:1
+      model_info: gp-mof-capstone-model:2
       model_input:
         type: mlflow_model
-        path: azureml:gp-mof-capstone-model:1
+        path: azureml:gp-mof-capstone-model:2
       train_dataset: ${{parent.inputs.my_training_data}}
       test_dataset: ${{parent.inputs.my_test_data}}
       target_column_name: ${{parent.inputs.target_column_name}}

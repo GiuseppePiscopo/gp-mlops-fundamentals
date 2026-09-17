@@ -3,7 +3,8 @@
 #   pip install -r requirements.txt
 #
 # Split in two groups:
-#  - shared: must stay in sync with config/gp-mof-capstone-env-conda.yml (Azure ML training env)
+#  - shared: must stay in sync with config/gp-mof-capstone-env-conda.yml (Azure ML training env),
+#    EXCEPT numpy: pinned to 1.x only in the Azure ML env, for RAI dashboard model-pickle compatibility
 #  - local-only: used by notebooks/exploration.ipynb and notebooks/profiling.ipynb, never run on Azure ML
 
 # --- shared with Azure ML training environment ---

@@ -1,6 +1,6 @@
 $schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
 name: gp-mof-capstone-data-rai-test
-version: 1
+version: 2
 type: mltable
 path: ../data/rai-test
 datastore: azureml:workspaceblobstore
