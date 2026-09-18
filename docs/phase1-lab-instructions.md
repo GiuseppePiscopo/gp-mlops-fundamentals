@@ -39,10 +39,12 @@ cd ./src
 
 python -m ridge.train --training_data ../data/sample/ --alpha 1.0
 
+python -m ridge_scaled.train --training_data ../data/sample/ --alpha 1.0
+
 python -m random_forest.train --training_data ../data/sample/ --n_estimators 100 --max_depth 10
 ```
 
-Run these from inside the `src/` folder, since the `common` module is resolved relative to the current working directory.
+Run these from inside the `src/` folder so the local project modules are resolved correctly.
 
 ## Create data asset in Azure Machine Learning
 
@@ -64,6 +66,12 @@ Run the Ridge regression training job in Azure Machine Learning:
 
 ```cmd
 az ml job create --file .\pipelines\gp-mof-capstone-job-ridge.yml
+```
+
+Run the scaled Ridge regression training job in Azure Machine Learning:
+
+```cmd
+az ml job create --file .\pipelines\gp-mof-capstone-job-ridge-scaled.yml
 ```
 
 Run the Random Forest training job in Azure Machine Learning:
