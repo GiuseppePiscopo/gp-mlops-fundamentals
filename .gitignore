@@ -67,3 +67,7 @@ mlflow.db
 # Local data for Responsible AI dashboard
 data/rai-train/
 data/rai-test/
+
+# Local outputs for pipeline step testing
+data/pipeline-rf-prepared/
+data/pipeline-rf-model/

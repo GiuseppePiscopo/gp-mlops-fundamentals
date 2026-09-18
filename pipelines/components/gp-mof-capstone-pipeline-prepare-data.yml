@@ -1,0 +1,19 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
+name: gp-mof-capstone-pipeline-prepare-data
+version: 1
+display_name: gp-mof-capstone-pipeline-prepare-data
+description: Prepare data for the Random Forest pipeline in the MLOps Fundamentals capstone project.
+
+code: ../../src/pipeline_rf
+command: >-
+  python prepare_data.py
+  --input_data ${{inputs.input_data}}
+  --output_data ${{outputs.output_data}}
+inputs:
+  input_data:
+    type: uri_folder
+outputs:
+  output_data:
+    type: uri_folder
+environment: azureml:gp-mof-capstone-env:2

@@ -1,0 +1,44 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+display_name: gp-mof-capstone-pipeline
+experiment_name: gp-mof-capstone
+description: Random Forest training pipeline for the MLOps Fundamentals capstone project.
+
+inputs:
+  training_data:
+    type: uri_folder
+    path: azureml:gp-mof-capstone-data:1
+    mode: ro_mount
+  n_estimators: 300
+  max_depth: 20
+
+outputs:
+  prepared_data:
+    type: uri_folder
+    mode: upload
+  trained_model:
+    type: mlflow_model
+    mode: upload
+
+settings:
+  default_compute: azureml:gp-mof-capstone-compute
+  default_datastore: azureml:workspaceblobstore
+
+jobs:
+  prepare_data:
+    type: command
+    component: ./components/gp-mof-capstone-pipeline-prepare-data.yml
+    inputs:
+      input_data: ${{parent.inputs.training_data}}
+    outputs:
+      output_data: ${{parent.outputs.prepared_data}}
+
+  train_model:
+    type: command
+    component: ./components/gp-mof-capstone-pipeline-train-model.yml
+    inputs:
+      training_data: ${{parent.jobs.prepare_data.outputs.output_data}}
+      n_estimators: ${{parent.inputs.n_estimators}}
+      max_depth: ${{parent.inputs.max_depth}}
+    outputs:
+      model_output: ${{parent.outputs.trained_model}}

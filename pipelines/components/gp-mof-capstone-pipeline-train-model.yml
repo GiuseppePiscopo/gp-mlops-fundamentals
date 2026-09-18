@@ -1,0 +1,27 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
+name: gp-mof-capstone-pipeline-train-model
+version: 1
+display_name: gp-mof-capstone-pipeline-train-model
+description: Train and evaluate a Random Forest model in the MLOps Fundamentals capstone project.
+
+code: ../../src/pipeline_rf
+command: >-
+  python train.py
+  --training_data ${{inputs.training_data}}
+  --model_output ${{outputs.model_output}}
+  --n_estimators ${{inputs.n_estimators}}
+  --max_depth ${{inputs.max_depth}}
+inputs:
+  training_data:
+    type: uri_folder
+  n_estimators:
+    type: integer
+    default: 300
+  max_depth:
+    type: integer
+    default: 20
+outputs:
+  model_output:
+    type: mlflow_model
+environment: azureml:gp-mof-capstone-env:2

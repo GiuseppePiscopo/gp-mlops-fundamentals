@@ -209,3 +209,27 @@ Run the following command to start the hyperparameter sweep job:
 ```cmd
 az ml job create --file .\pipelines\gp-mof-capstone-job-rf-sweep.yml
 ```
+
+## Run pipeline steps locally
+
+Run the preprocessing step:
+
+```cmd
+python .\src\pipeline_rf\prepare_data.py --input_data .\data\sample --output_data .\data\pipeline-rf-prepared
+```
+
+Run the training step on the prepared output:
+
+```cmd
+python .\src\pipeline_rf\train.py --training_data .\data\pipeline-rf-prepared --model_output .\data\pipeline-rf-model --n_estimators 300 --max_depth 20
+```
+
+The first step prepares the tabular data; the second trains, evaluates, and saves the MLflow model.
+
+## Run pipeline job in Azure Machine Learning
+
+Run the following command to submit the two-step Random Forest pipeline job to Azure Machine Learning:
+
+```cmd
+az ml job create --file .\pipelines\gp-mof-capstone-pipeline.yml
+```
