@@ -37,7 +37,12 @@ def main(args):
         # evaluate model
         eval_model(model, X_test, y_test)
 
-        mlflow.sklearn.log_model(model, artifact_path="model")
+        mlflow.sklearn.log_model(
+            model,
+            artifact_path="model",
+            # Required by Azure ML's generated MLflow scoring script.
+            extra_pip_requirements=["azureml-ai-monitoring"],
+        )
 
 
 def train_model(n_estimators, max_depth, X_train, y_train):

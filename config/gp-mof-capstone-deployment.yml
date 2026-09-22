@@ -1,0 +1,7 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: blue
+endpoint_name: gp-mof-capstone-endpoint
+model: azureml:gp-mof-capstone-model:3
+instance_type: Standard_F4s_v2
+instance_count: 1
+description: Blue deployment of the registered model for the MLOps Fundamentals capstone project.
