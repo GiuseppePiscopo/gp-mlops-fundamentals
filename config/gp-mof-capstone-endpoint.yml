@@ -1,0 +1,4 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineEndpoint.schema.json
+name: gp-mof-capstone-endpoint
+auth_mode: key
+description: Managed online endpoint for MLOps Fundamentals capstone project.

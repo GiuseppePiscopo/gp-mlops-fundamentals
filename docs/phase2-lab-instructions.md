@@ -11,3 +11,11 @@ Promote the registered best model to the production environment:
 ```cmd
 az ml model update --name gp-mof-capstone-model --version 1 --set tags.stage=production
 ```
+
+### Create the managed online endpoint
+
+Create the managed online endpoint in Azure Machine Learning:
+
+```cmd
+az ml online-endpoint create --file .\config\gp-mof-capstone-endpoint.yml
+```
