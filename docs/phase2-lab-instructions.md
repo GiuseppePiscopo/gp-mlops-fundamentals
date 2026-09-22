@@ -47,3 +47,35 @@ Create the deployment from the registered MLflow model:
 ```cmd
 az ml online-deployment create --file .\config\gp-mof-capstone-deployment.yml
 ```
+
+### Route 100% of traffic to the blue deployment
+
+Route all endpoint traffic to the blue deployment:
+
+```cmd
+az ml online-endpoint update --name gp-mof-capstone-endpoint --traffic "blue=100"
+```
+
+### Verify the endpoint
+
+Check the endpoint details:
+
+```cmd
+az ml online-endpoint show --name gp-mof-capstone-endpoint
+```
+
+Confirm that the endpoint provisioning state is `Succeeded` and that the traffic mapping shows `blue: 100`.
+
+### Test with a REST call
+
+The registered model (`random_forest/train.py`, no MLflow signature) expects `input_data` to be a numeric matrix containing the raw values as they come out of `prepare_data` in `common/training_utils.py`: `Date` column dropped, categorical columns `Seasons`/`Holiday`/`Functioning Day` one-hot encoded (`drop_first=True`), no target column. The payload is in [data/test-request/request.json](../data/test-request/request.json) (sample row taken from `data/rai-train/data.csv`, same encoding as training).
+
+Invoke the endpoint with the test payload:
+
+```cmd
+az ml online-endpoint invoke --name gp-mof-capstone-endpoint --request-file data\test-request\request.json
+```
+
+### Check the response
+
+Check the returned value in the terminal (the `Rented Bike Count` prediction) and the request logs in Azure ML Studio (deployment "Log" tab).
