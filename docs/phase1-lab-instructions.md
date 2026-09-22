@@ -207,7 +207,7 @@ Once completed, open the registered model (`gp-mof-capstone-model`) in Azure ML 
 Promote the registered best model to the staging environment:
 
 ```cmd
-az ml model update --name gp-mof-capstone-model --version 1 --set properties.stage=staging
+az ml model update --name gp-mof-capstone-model --version 1 --set tags.stage=staging
 ```
 
 ## Run sweep job to tune hyperparameters in Azure ML
