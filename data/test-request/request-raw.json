@@ -1,0 +1,19 @@
+{
+  "data": [
+    {
+      "Date": "01/10/2017",
+      "Hour": 15,
+      "Temperature(°C)": 13.2,
+      "Humidity(%)": 61,
+      "Wind speed (m/s)": 3.9,
+      "Visibility (10m)": 719,
+      "Dew point temperature(°C)": 5.8,
+      "Solar Radiation (MJ/m2)": 1.03,
+      "Rainfall(mm)": 0.0,
+      "Snowfall (cm)": 0.0,
+      "Seasons": "Autumn",
+      "Holiday": "No Holiday",
+      "Functioning Day": "Yes"
+    }
+  ]
+}

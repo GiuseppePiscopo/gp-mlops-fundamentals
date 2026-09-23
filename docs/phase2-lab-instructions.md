@@ -160,3 +160,19 @@ New deployments start at 0% traffic, so no traffic update is needed. Confirm it:
 ```cmd
 az ml online-endpoint show --name gp-mof-capstone-endpoint --query traffic
 ```
+
+### Test the green deployment directly
+
+Blue and green have different input schemas (blue: pre-processed features; green: raw data), so always target a specific deployment instead of relying on the endpoint's traffic split — a real blue/green rollout would instead require an identical input contract between deployments.
+
+Invoke blue with the existing payload, and green with a raw payload:
+
+```cmd
+az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name blue --request-file data\test-request\request.json
+
+az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name green --request-file data\test-request\request-raw.json
+```
+
+### Check the response
+
+Compare the `Rented Bike Count` prediction returned by green against the one returned by blue, and check each deployment's request logs in Azure ML Studio (deployment "Log" tab).
