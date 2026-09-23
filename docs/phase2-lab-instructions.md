@@ -103,3 +103,29 @@ az role assignment delete --assignee-object-id $endpointPrincipalId --role "Azur
 ```
 
 Assign the role again, wait a few minutes for propagation, and retry the deployment.
+
+## Part 2: Deploy with a custom scoring script
+
+### Export the trained model as a plain artifact
+
+Download the registered MLflow model's files, then re-save the underlying estimator as a plain joblib file (no MLflow flavor). Run the export in a dedicated virtual environment pinned to the same versions as the scoring environment (`config/gp-mof-capstone-env-score-conda.yml`). Create it with the `py` launcher targeting a specific Python 3.9–3.12 interpreter (numpy 1.26.4 has no prebuilt wheel for newer versions, and plain `python` may resolve to one on your machine):
+
+```cmd
+az ml model download --name gp-mof-capstone-model --version 3 --download-path .\model-mlflow
+
+py -3.11 -m venv .venv-export
+
+.venv-export\Scripts\python.exe -m pip install -r .\tools\export-requirements.txt
+
+.venv-export\Scripts\python.exe .\tools\export_plain_model.py --model-dir model-mlflow\gp-mof-capstone-model\model --output model\model.pkl
+```
+
+If you already created `.venv-export` with the wrong Python version, delete the folder first (`Remove-Item -Recurse -Force .venv-export`) before recreating it — reusing it with a different interpreter leaves a broken mix of compiled extensions.
+
+### Register the plain artifact as a custom model
+
+Register it as a separate model, with its own version lineage independent from the MLflow model, and type `custom_model`:
+
+```cmd
+az ml model create --name gp-mof-capstone-model-custom --version 1 --path .\model\model.pkl --type custom_model
+```

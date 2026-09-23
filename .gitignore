@@ -54,7 +54,7 @@ Thumbs.db
 
 # Python virtual environments
 venv/
-.venv/
+.venv*/
 
 # dotenv environment variable files
 .env.*.local
@@ -71,3 +71,7 @@ data/rai-test/
 # Local outputs for pipeline step testing
 data/pipeline-rf-prepared/
 data/pipeline-rf-model/
+
+# Local outputs for the custom scoring model export
+model-mlflow/
+model/
