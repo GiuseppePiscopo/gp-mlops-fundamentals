@@ -2,7 +2,7 @@
 
 See the [README](../README.md) for overview and instructions on setting up the MLOps Fundamentals capstone project.
 
-## Part 1
+## Part 1: Deploy to managed endpoint
 
 ### Promote the model to Production
 
@@ -45,7 +45,7 @@ Wait a few minutes for the role assignment to propagate before creating the depl
 Create the deployment from the registered MLflow model:
 
 ```cmd
-az ml online-deployment create --file .\config\gp-mof-capstone-deployment.yml
+az ml online-deployment create --file .\config\gp-mof-capstone-deployment-blue.yml
 ```
 
 ### Route 100% of traffic to the blue deployment
