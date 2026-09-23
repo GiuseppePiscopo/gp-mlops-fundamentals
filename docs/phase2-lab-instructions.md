@@ -79,3 +79,27 @@ az ml online-endpoint invoke --name gp-mof-capstone-endpoint --request-file data
 ### Check the response
 
 Check the returned value in the terminal (the `Rented Bike Count` prediction) and the request logs in Azure ML Studio (deployment "Log" tab).
+
+### Recreate a failed endpoint or deployment
+
+To restart with a new endpoint identity, delete the endpoint and all of its deployments:
+
+```cmd
+az ml online-endpoint delete --name gp-mof-capstone-endpoint --yes
+```
+
+Then repeat the endpoint creation, role assignment, and blue deployment steps in that order.
+
+If the endpoint succeeded but only the blue deployment failed, delete and recreate only the deployment:
+
+```cmd
+az ml online-deployment delete --name blue --endpoint-name gp-mof-capstone-endpoint --yes
+```
+
+When the new deployment reports `workspaces/environments/read`, delete the workspace-level `AzureML Data Scientist` assignment for the current endpoint principal ID:
+
+```powershell
+az role assignment delete --assignee-object-id $endpointPrincipalId --role "AzureML Data Scientist" --scope $workspaceScope
+```
+
+Assign the role again, wait a few minutes for propagation, and retry the deployment.
