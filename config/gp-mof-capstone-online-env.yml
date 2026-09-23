@@ -1,0 +1,6 @@
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+name: gp-mof-capstone-online-env
+version: 1
+description: Serving environment for the registered MLflow model on a managed online endpoint.
+image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu22.04:latest
+conda_file: ./gp-mof-capstone-online-env-conda.yml

@@ -40,6 +40,14 @@ az role assignment list --assignee-object-id $endpointPrincipalId --scope $works
 
 Wait a few minutes for the role assignment to propagate before creating the deployment.
 
+### Create the serving environment
+
+Register the serving environment required by the MLflow deployment. It includes the model dependencies and the Azure ML inference and monitoring packages:
+
+```cmd
+az ml environment create --file .\config\gp-mof-capstone-online-env.yml
+```
+
 ### Create the blue deployment from the registered MLflow model
 
 Create the deployment from the registered MLflow model:
