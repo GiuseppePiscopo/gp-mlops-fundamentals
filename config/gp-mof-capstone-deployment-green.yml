@@ -1,0 +1,11 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: green
+endpoint_name: gp-mof-capstone-endpoint
+model: azureml:gp-mof-capstone-model-custom:1
+code_configuration:
+  code: ../src/score_rf
+  scoring_script: score.py
+environment: azureml:gp-mof-capstone-env-score:1
+instance_type: Standard_DS2_v2
+instance_count: 1
+description: Green deployment of the custom scoring script over a plain joblib model, for the MLOps Fundamentals capstone project.

@@ -90,13 +90,14 @@ az ml online-endpoint delete --name gp-mof-capstone-endpoint --yes
 
 Then repeat the endpoint creation, role assignment, and blue deployment steps in that order.
 
-If the endpoint succeeded but only the blue deployment failed, delete and recreate only the deployment:
+If the endpoint succeeded but a deployment (blue or green) failed, delete and recreate only that deployment:
 
 ```cmd
 az ml online-deployment delete --name blue --endpoint-name gp-mof-capstone-endpoint --yes
+az ml online-deployment delete --name green --endpoint-name gp-mof-capstone-endpoint --yes
 ```
 
-When the new deployment reports `workspaces/environments/read`, delete the workspace-level `AzureML Data Scientist` assignment for the current endpoint principal ID:
+This same permission-propagation issue can resurface for any new deployment on this endpoint (including green in Part 2), even though the endpoint itself hasn't changed. When a deployment reports `workspaces/environments/read`, delete the workspace-level `AzureML Data Scientist` assignment for the current endpoint principal ID:
 
 ```powershell
 az role assignment delete --assignee-object-id $endpointPrincipalId --role "AzureML Data Scientist" --scope $workspaceScope
@@ -144,4 +145,18 @@ Create the scoring environment:
 
 ```cmd
 az ml environment create --file .\config\gp-mof-capstone-env-score.yml
+```
+
+### Create the green deployment
+
+Create the deployment:
+
+```cmd
+az ml online-deployment create --file .\config\gp-mof-capstone-deployment-green.yml
+```
+
+New deployments start at 0% traffic, so no traffic update is needed. Confirm it:
+
+```cmd
+az ml online-endpoint show --name gp-mof-capstone-endpoint --query traffic
 ```
