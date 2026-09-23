@@ -129,3 +129,19 @@ Register it as a separate model, with its own version lineage independent from t
 ```cmd
 az ml model create --name gp-mof-capstone-model-custom --version 1 --path .\model\model.pkl --type custom_model
 ```
+
+### Promote the custom model to Production
+
+Tag this custom model version as production too:
+
+```cmd
+az ml model update --name gp-mof-capstone-model-custom --version 1 --set tags.stage=production
+```
+
+### Define the custom scoring environment
+
+Create the scoring environment:
+
+```cmd
+az ml environment create --file .\config\gp-mof-capstone-env-score.yml
+```
