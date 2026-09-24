@@ -17,6 +17,21 @@ Install the Python dependencies required to run the scripts locally:
 pip install -r ./requirements.txt
 ```
 
+### Docker Desktop settings for local endpoints
+
+Testing a managed endpoint locally (Phase 2) runs it in a Docker container, and on some networks pulling the Microsoft base image fails unless you apply these one-time Docker Desktop settings.
+
+Install [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) (WSL2 backend) if not already present.
+
+Disable the containerd image store: Docker Desktop → Settings → General → uncheck "Use containerd for pulling and storing images" → Apply & Restart.
+
+Pin `mcr.microsoft.com` to its IPv4 address in the hosts file (some networks fail the IPv6 TLS handshake to this host); run as Administrator:
+
+```powershell
+$ip = (Resolve-DnsName mcr.microsoft.com -Type A | Select-Object -First 1).IPAddress
+Add-Content -Path "$env:SystemRoot\System32\drivers\etc\hosts" -Value "`n$ip`tmcr.microsoft.com"
+```
+
 ## Register providers for managed online endpoints
 
 Before Phase 2 creates a managed online endpoint, confirm that these resource providers are registered in the Azure subscription:

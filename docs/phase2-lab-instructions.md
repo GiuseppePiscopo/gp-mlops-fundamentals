@@ -107,13 +107,45 @@ Assign the role again, wait a few minutes for propagation, and retry the deploym
 
 ## Part 2: Deploy with a custom scoring script
 
-### Export the trained model as a plain artifact
+### Download the registered model
 
-Download the registered MLflow model's files, then re-save the underlying estimator as a plain joblib file (no MLflow flavor). Run the export in a dedicated virtual environment pinned to the same versions as the scoring environment (`config/gp-mof-capstone-env-score-conda.yml`). Create it with the `py` launcher targeting a specific Python 3.9–3.12 interpreter (numpy 1.26.4 has no prebuilt wheel for newer versions, and plain `python` may resolve to one on your machine):
+Download the registered MLflow model's files locally; this download is reused both for the local deployment and for custom scoring deployment:
 
 ```cmd
 az ml model download --name gp-mof-capstone-model --version 3 --download-path .\model-mlflow
+```
 
+### Create the local managed endpoint
+
+Create the same endpoint definition locally, running it in a Docker container instead of provisioning cloud resources:
+
+```cmd
+az ml online-endpoint create --local --file .\config\gp-mof-capstone-endpoint.yml
+```
+
+### Create the local blue deployment
+
+Create the blue deployment locally, pointing directly at the model files downloaded above:
+
+```cmd
+az ml online-deployment create --local --file .\config\gp-mof-capstone-deployment-blue-local.yml
+```
+
+### Test the local blue deployment
+
+Invoke the local deployment with the same payload used for the remote blue deployment:
+
+```cmd
+az ml online-endpoint invoke --local --name gp-mof-capstone-endpoint --deployment-name blue --request-file data\test-request\request.json
+```
+
+Check the returned value in the terminal (the `Rented Bike Count` prediction).
+
+### Export the trained model as a plain artifact
+
+Re-save the underlying estimator downloaded above as a plain joblib file (no MLflow flavor). Run the export in a dedicated virtual environment pinned to the same versions as the scoring environment (`config/gp-mof-capstone-env-score-conda.yml`). Create it with the `py` launcher targeting a specific Python 3.9–3.12 interpreter (numpy 1.26.4 has no prebuilt wheel for newer versions, and plain `python` may resolve to one on your machine):
+
+```cmd
 py -3.11 -m venv .venv-export
 
 .venv-export\Scripts\python.exe -m pip install -r .\tools\export-requirements.txt
@@ -176,3 +208,23 @@ az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name g
 ### Check the response
 
 Compare the `Rented Bike Count` prediction returned by green against the one returned by blue, and check each deployment's request logs in Azure ML Studio (deployment "Log" tab).
+
+## Part 4: Cleanup
+
+### Remove the remote endpoint
+
+Delete the remote endpoint; this also removes its blue and green deployments:
+
+```cmd
+az ml online-endpoint delete --name gp-mof-capstone-endpoint --yes
+```
+
+### Remove the local endpoint
+
+Delete the local endpoint; this also removes its local blue deployment and the associated Docker container:
+
+```cmd
+az ml online-endpoint delete --local --name gp-mof-capstone-endpoint --yes
+```
+
+If you disabled it only for this lab, re-enable the containerd image store: Docker Desktop → Settings → General → check "Use containerd for pulling and storing images" → Apply & Restart.

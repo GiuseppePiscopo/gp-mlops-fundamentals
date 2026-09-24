@@ -1,0 +1,14 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: blue
+endpoint_name: gp-mof-capstone-endpoint
+model:
+  path: ../model-mlflow/gp-mof-capstone-model
+code_configuration:
+  code: ../src/score_blue_local
+  scoring_script: score.py
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
+  conda_file: ./gp-mof-capstone-env-conda-local.yml
+instance_type: Standard_F4s_v2
+instance_count: 1
+description: Blue deployment of the registered model for the MLOps Fundamentals capstone project.
