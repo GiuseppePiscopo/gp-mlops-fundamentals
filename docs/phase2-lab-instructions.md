@@ -66,7 +66,7 @@ az ml online-endpoint show --name gp-mof-capstone-endpoint
 
 Confirm that the endpoint provisioning state is `Succeeded` and that the traffic mapping shows `blue: 100`.
 
-### Test with a REST call
+### Test with the Azure ML CLI
 
 The registered model (`random_forest/train.py`, no MLflow signature) expects `input_data` to be a numeric matrix containing the raw values as they come out of `prepare_data` in `common/training_utils.py`: `Date` column dropped, categorical columns `Seasons`/`Holiday`/`Functioning Day` one-hot encoded (`drop_first=True`), no target column. The payload is in [data/test-request/request.json](../data/test-request/request.json) (sample row taken from `data/rai-train/data.csv`, same encoding as training).
 
@@ -74,6 +74,17 @@ Invoke the endpoint with the test payload:
 
 ```cmd
 az ml online-endpoint invoke --name gp-mof-capstone-endpoint --request-file data\test-request\request.json
+```
+
+### Test with curl
+
+Read the scoring URI and key into variables, then call the endpoint directly over REST:
+
+```powershell
+$scoringUri = az ml online-endpoint show --name gp-mof-capstone-endpoint --query scoring_uri -o tsv
+$scoringKey = az ml online-endpoint get-credentials --name gp-mof-capstone-endpoint --query primaryKey -o tsv
+
+curl -X POST $scoringUri -H "Authorization: Bearer $scoringKey" -H "Content-Type: application/json" -d "@data\test-request\request.json"
 ```
 
 ### Check the response
