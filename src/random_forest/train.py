@@ -15,6 +15,11 @@ def parse_args():
     parser.add_argument("--training_data", dest="training_data", type=str)
     parser.add_argument("--n_estimators", dest="n_estimators", type=int, default=100)
     parser.add_argument("--max_depth", dest="max_depth", type=int, default=None)
+    parser.add_argument(
+        "--fail_for_alert_test",
+        type=lambda x: x.lower() == "true",
+        default=False,
+    )
 
     # parse args
     args = parser.parse_args()
@@ -24,6 +29,10 @@ def parse_args():
 
 
 def main(args):
+
+    if args.fail_for_alert_test:
+        raise RuntimeError("ALERT TEST: intentional Azure ML training job failure")
+
     with mlflow.start_run():
         # read data
         df = get_data(args.training_data)

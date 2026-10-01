@@ -220,6 +220,20 @@ az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name g
 
 Compare the `Rented Bike Count` prediction returned by green against the one returned by blue, and check each deployment's request logs in Azure ML Studio (deployment "Log" tab).
 
+## Part 3: Monitor
+
+[...]
+
+### Force a training job failure in Azure Machine Learning
+
+Run the Random Forest training job forcing a failure in Azure Machine Learning:
+
+```cmd
+az ml job create --file .\pipelines\gp-mof-capstone-job-rf.yml --set inputs.fail_for_alert_test=true
+```
+
+[...]
+
 ## Part 4: Cleanup
 
 ### Remove the remote endpoint

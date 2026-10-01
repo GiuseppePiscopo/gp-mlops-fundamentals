@@ -11,6 +11,7 @@ command: >-
   --training_data ${{inputs.training_data}}
   --n_estimators ${{inputs.n_estimators}}
   --max_depth ${{inputs.max_depth}}
+  --fail_for_alert_test ${{inputs.fail_for_alert_test}}
 
 inputs:
   training_data:
@@ -18,6 +19,7 @@ inputs:
     path: azureml:gp-mof-capstone-data:1
   n_estimators: 100
   max_depth: 10
+  fail_for_alert_test: false
 
 environment: azureml:gp-mof-capstone-env:2
 compute: azureml:gp-mof-capstone-compute
