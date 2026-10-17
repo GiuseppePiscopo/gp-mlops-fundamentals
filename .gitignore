@@ -68,6 +68,9 @@ mlflow.db
 data/rai-train/
 data/rai-test/
 
+# Local data for the monitoring drift reference
+data/monitoring-reference/
+
 # Local outputs for pipeline step testing
 data/pipeline-rf-prepared/
 data/pipeline-rf-model/

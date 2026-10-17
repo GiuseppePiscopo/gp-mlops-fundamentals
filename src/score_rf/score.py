@@ -4,6 +4,21 @@ import os
 import joblib
 import pandas as pd
 
+try:
+    # available in the scoring environment via azureml-ai-monitoring; dummy fallback
+    # lets the module stay importable on machines without the Azure ML SDK
+    from azureml.ai.monitoring import Collector
+
+    inputs_collector = Collector(name="model_inputs")
+    outputs_collector = Collector(name="model_outputs")
+except Exception:  # pragma: no cover
+    class _NoOpCollector:
+        def collect(self, *args, **kwargs):
+            return None
+
+    inputs_collector = _NoOpCollector()
+    outputs_collector = _NoOpCollector()
+
 DROP_COLUMNS = ["Date"]
 CATEGORICAL_COLUMNS = ["Seasons", "Holiday", "Functioning Day"]
 # fixed at training time (drop_first=True): a batch missing a category would otherwise
@@ -67,6 +82,14 @@ def run(raw_data):
     records = json.loads(raw_data)["data"]
     df = prepare_data(records)
     predictions = model.predict(df.values)
+
+    # production inference data for Azure ML model monitoring (data_collector must be
+    # enabled on the deployment; blue uses auto-instrumentation, green logs explicitly here)
+    try:
+        context = inputs_collector.collect(df)
+        outputs_collector.collect(pd.DataFrame(predictions, columns=["prediction"]), context)
+    except Exception as ex:  # data collection must never break scoring
+        print(f"Data collection skipped: {ex}")
 
     print("Request processed")
 

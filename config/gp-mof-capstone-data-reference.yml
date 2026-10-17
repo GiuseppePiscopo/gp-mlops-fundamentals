@@ -1,0 +1,7 @@
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+name: gp-mof-capstone-data-reference
+version: 1
+type: mltable
+path: ../data/monitoring-reference
+datastore: azureml:workspaceblobstore
+description: Drift reference for model monitoring (training split in the model's input encoding) in the MLOps Fundamentals capstone project.

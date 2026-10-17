@@ -68,3 +68,11 @@ az configure --defaults group=gp-mof-rg-dev workspace=gp-mof-ws-dev
 ## Phase 1 Lab
 
 See [Phase 1 Lab instructions](docs/phase1-lab-instructions.md) for detailed steps on that phase.
+
+## Phase 2 Lab
+
+See [Phase 2 Lab instructions](docs/phase2-lab-instructions.md) for detailed steps on that phase.
+
+## Known environment limitations
+
+- **Model monitoring cannot run (Phase 2, Step 3) in this subscription because of the Italy North ESv3 quota.** The monitoring Spark job requires ESv3 SKUs, ESv3 is a legacy series, and the region refuses additional `standardESv3Family` quota. The monitor can be created and scheduled, but its Spark run fails. See the note in [Phase 2 Lab instructions](docs/phase2-lab-instructions.md).

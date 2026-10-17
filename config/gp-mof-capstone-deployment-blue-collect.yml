@@ -1,0 +1,14 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: blue
+endpoint_name: gp-mof-capstone-endpoint
+model: azureml:gp-mof-capstone-model:3
+instance_type: Standard_F4s_v2
+instance_count: 1
+data_collector:
+  rolling_rate: minute
+  collections:
+    model_inputs:
+      enabled: "true"
+    model_outputs:
+      enabled: "true"
+description: Blue deployment with data collection enabled for monitoring in MLOps Fundamentals capstone project.

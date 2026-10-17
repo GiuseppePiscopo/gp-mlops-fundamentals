@@ -1,0 +1,18 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: green
+endpoint_name: gp-mof-capstone-endpoint
+model: azureml:gp-mof-capstone-model-custom:1
+code_configuration:
+  code: ../src/score_rf
+  scoring_script: score.py
+environment: azureml:gp-mof-capstone-env-score:2
+instance_type: Standard_DS2_v2
+instance_count: 1
+data_collector:
+  rolling_rate: minute
+  collections:
+    model_inputs:
+      enabled: "true"
+    model_outputs:
+      enabled: "true"
+description: Green deployment with data collection enabled for monitoring in MLOps Fundamentals capstone project.

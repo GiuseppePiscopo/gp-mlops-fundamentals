@@ -1,0 +1,17 @@
+name: gp-mof-capstone-env-score-collect-conda
+description: Conda environment for the custom scoring deployment with data collection, in MLOps Fundamentals capstone project.
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pip=24.0
+  - pip:
+      # same versions as the training environment: the model was pickled with these
+      - numpy==1.26.4
+      - pandas==2.2.3
+      - scikit-learn==1.6.1
+      - joblib==1.4.2
+      # required by Azure ML to serve a scoring script on a non-inference base image
+      - azureml-inference-server-http==1.5.1
+      # data collector SDK used by score.py to log model_inputs/model_outputs for monitoring
+      - azureml-ai-monitoring

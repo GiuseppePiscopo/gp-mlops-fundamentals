@@ -1,0 +1,38 @@
+$schema: https://azuremlschemas.azureedge.net/latest/monitorSchedule.schema.json
+name: gp-mof-capstone-monitor
+display_name: GP MOF capstone model monitoring
+description: Data drift monitoring for the blue (production) deployment in MLOps Fundamentals capstone project.
+
+trigger:
+  type: recurrence
+  frequency: minute
+  interval: 15
+
+create_monitor:
+
+  compute:
+    instance_type: Standard_E4s_v3
+    runtime_version: "3.4"
+
+  monitoring_target:
+    ml_task: regression
+    endpoint_deployment_id: azureml:gp-mof-capstone-endpoint:blue
+
+  monitoring_signals:
+    capstone_data_drift:
+      type: data_drift
+      reference_data:
+        input_data:
+          path: azureml:gp-mof-capstone-data-reference:1
+          type: mltable
+        data_context: training
+      features:
+        - Temperature(°C)
+      alert_enabled: true
+      metric_thresholds:
+        numerical:
+          jensen_shannon_distance: 0.1
+
+  alert_notification:
+    emails:
+      - you@example.com

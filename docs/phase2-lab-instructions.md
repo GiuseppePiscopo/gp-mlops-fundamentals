@@ -68,7 +68,7 @@ Confirm that the endpoint provisioning state is `Succeeded` and that the traffic
 
 ### Test with the Azure ML CLI
 
-The registered model (`random_forest/train.py`, no MLflow signature) expects `input_data` to be a numeric matrix containing the raw values as they come out of `prepare_data` in `common/training_utils.py`: `Date` column dropped, categorical columns `Seasons`/`Holiday`/`Functioning Day` one-hot encoded (`drop_first=True`), no target column. The payload is in [data/test-request/request.json](../data/test-request/request.json) (sample row taken from `data/rai-train/data.csv`, same encoding as training).
+The registered model (`random_forest/train.py`, no MLflow signature) expects `input_data` to be a numeric matrix containing the raw values as they come out of `prepare_data` in `common/training_utils.py`: `Date` column dropped, categorical columns `Seasons`/`Holiday`/`Functioning Day` one-hot encoded (`drop_first=True`), no target column. The provided payload has that specific shape. It is a sample row taken from `data/rai-train/data.csv`, where the same processing is applied, and the same encoding as training is used.
 
 Invoke the endpoint with the test payload:
 
@@ -222,17 +222,139 @@ Compare the `Rented Bike Count` prediction returned by green against the one ret
 
 ## Part 3: Monitor
 
-[...]
+### Enable data collection on blue
 
-### Force a training job failure in Azure Machine Learning
+Update the blue deployment to log production data:
 
-Run the Random Forest training job forcing a failure in Azure Machine Learning:
+```cmd
+az ml online-deployment update --file .\config\gp-mof-capstone-deployment-blue-collect.yml
+```
+
+Send one request to confirm scoring still works:
+
+```cmd
+az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name blue --request-file data\test-request\request.json
+```
+
+### Create the drift reference dataset
+
+The blue model has no MLflow signature, so the drift reference is materialized explicitly from the training data, encoded as the model consumes it. Generate it locally:
+
+```cmd
+python .\tools\prepare_monitoring_reference.py
+```
+
+Register it as an MLTable data asset:
+
+```cmd
+az ml data create --file .\config\gp-mof-capstone-data-reference.yml
+```
+
+### Create the drift monitor
+
+Create the drift check on the blue deployment with Jensen-Shannon threshold `0.1`, overriding the notification email. The trigger runs every 15 minutes (a short interval so the first run lands shortly after you send the drifted traffic, instead of waiting a day), so disable it once you are done:
+
+```cmd
+az ml schedule create --file .\config\gp-mof-capstone-monitor.yml --set "create_monitor.alert_notification.emails[0]=<your-email>"
+```
+
+Check the schedule:
+
+```cmd
+az ml schedule show --name gp-mof-capstone-monitor
+
+az ml schedule list -o table
+```
+
+The monitoring job runs on serverless Spark compute (`Standard_E4s_v3`, the only instance family the monitor supports).
+
+**Environment limitation (this lab subscription, region Italy North):** creating, configuring and scheduling the monitor works, but the Spark run fails because the serverless Spark quota cannot be satisfied. The monitor accepts only ESv3 SKUs (`Standard_E4s_v3` … `E64s_v3`), ESv3 is now a legacy VM series, and the region refuses additional quota for the `standardESv3Family`, so the pipeline fails with `requested quota type DedicatedSparkCores for VMFamily standardESv3Family is 20 which is more than the upper limit 6`, and the quota request itself is rejected with `Additional quota isn't available for the requested family 'standardESv3Family'`. There is no configuration workaround (the monitor exposes only `instance_type` and `runtime_version`, and the recommended v5/v6/v7 families are not supported by the monitor). Treat this step as demonstrated at the configuration level; to actually run it, use a region/subscription with available ESv3 quota.
+
+### Send drifted traffic
+
+Send one drifted request to blue:
+
+```cmd
+az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name blue --request-file data\test-request\request-drift.json
+```
+
+Send 50 drifted requests:
+
+```cmd
+python .\tools\simulate_drift.py --count 50
+```
+
+### Verify collected data from blue
+
+The data collector writes logged records to the workspace's default datastore under `modelDataCollector/<endpoint>/<deployment>/<collection>/`, one JSON Lines file per rolling window. Data appears a few minutes after the requests, once the window rolls over. Blue is a no-code MLflow deployment without a signature, so it collects only `model_outputs`, not `model_inputs`. Inspect what blue collected:
+
+```cmd
+python .\tools\show_collected_data.py --deployment blue --collection model_outputs
+```
+
+### Check the monitor run and the alert email
+
+*NOTE*: This check is not executable in this environment: the monitoring Spark job cannot run (see the limitation above).
+
+In a region with available ESv3 quota, open the endpoint "Monitor" tab in Azure ML Studio, then the monitoring job, and confirm the drift metric exceeds `0.1` on the drifted window and the email notification arrives (delivery lags the scheduled run). The monitor runs on its own schedule, so wait for the next run (up to 15 minutes) after sending the drifted traffic.
+
+### Disable the monitor
+
+Stop the monitor so it no longer starts Spark runs; re-enable or delete it when you need it again:
+
+```cmd
+az ml schedule disable --name gp-mof-capstone-monitor
+```
+
+Re-enable it with `az ml schedule enable --name gp-mof-capstone-monitor`, and remove it with `az ml schedule delete --name gp-mof-capstone-monitor`.
+
+### Enable data collection on green
+
+Recreate the scoring environment with the monitoring package:
+
+```cmd
+az ml environment create --file .\config\gp-mof-capstone-env-score-collect.yml
+```
+
+Update the green deployment to log production data:
+
+```cmd
+az ml online-deployment update --file .\config\gp-mof-capstone-deployment-green-collect.yml
+```
+
+Send a request to confirm scoring still works:
+
+```cmd
+az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name green --request-file data\test-request\request-raw.json
+```
+
+### Verify collected data from green
+
+The green scoring script logs its inputs and outputs explicitly with the monitoring SDK `Collector`, so unlike blue it also produces `model_inputs`. Inspect what green collected:
+
+```cmd
+python .\tools\show_collected_data.py --deployment green
+
+python .\tools\show_collected_data.py --deployment green --collection model_outputs
+```
+
+The first command reads `model_inputs` (the default), the second reads `model_outputs`.
+
+### Raise a failed job for the operations alert
+
+Run the Random Forest training job forcing a failure:
 
 ```cmd
 az ml job create --file .\pipelines\gp-mof-capstone-job-rf.yml --set inputs.fail_for_alert_test=true
 ```
 
-[...]
+Create an Azure Monitor alert rule on failed jobs and confirm it fires for this run. Reuse the same pattern for endpoint health (failed requests, latency).
+
+### Review automatic retraining with Event Grid
+
+*NOTE*: This review is not executable in this environment either: without a successful monitoring run there is no signal breach to open (see the limitation above).
+
+In a region with available ESv3 quota, open the monitoring signal breach in Azure ML Studio and trace how it can publish to Event Grid to trigger a retraining pipeline. Keep this as the design reference for Phase 3; no retraining is wired in this lab.
 
 ## Part 4: Cleanup
 
