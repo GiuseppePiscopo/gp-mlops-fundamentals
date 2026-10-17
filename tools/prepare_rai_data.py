@@ -9,32 +9,20 @@ import os
 import shutil
 import sys
 
-import pandas as pd
-from sklearn.model_selection import train_test_split
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from common.training_utils import CATEGORICAL_COLUMNS, DROP_COLUMNS, RANDOM_SEED, TARGET_COLUMN, get_data  # noqa: E402
+from common.training_utils import TARGET_COLUMN, get_data, prepare_dataframe  # noqa: E402
 
 SOURCE_CSV = "data/sample/SeoulBikeData.csv"
 TRAIN_DIR = "data/rai-train"
 TEST_DIR = "data/rai-test"
-MLTABLE_TEMPLATE = os.path.join(os.path.dirname(__file__), "..", "config", "rai-mltable-template", "MLTable")
+MLTABLE_TEMPLATE = os.path.join(os.path.dirname(__file__), "..", "config", "mltable-template", "MLTable")
 # the RAI component passes target_column_name as a CLI arg without quoting, so spaces break its argparse
 RAI_TARGET_COLUMN = "Rented_Bike_Count"
 
 
 def prepare_data(df):
-    df = df.drop(columns=DROP_COLUMNS)
-    df = df.rename(columns={TARGET_COLUMN: RAI_TARGET_COLUMN})
-    # same encoding the model was trained on, so RAI can call model.predict() on these rows directly.
-    # dtype=int (not the pandas default bool): RAI's validation rejects non-numeric columns
-    # unless declared in categorical_column_names
-    df = pd.get_dummies(df, columns=CATEGORICAL_COLUMNS, drop_first=True, dtype=int)
-
-    # same random_state/test_size as common.training_utils.prepare_data, kept as a DataFrame
-    # (prepare_data returns numpy arrays, which would lose the column names the RAI dashboard needs)
-    train_df, test_df = train_test_split(df, test_size=0.20, random_state=RANDOM_SEED)
-    return train_df, test_df
+    # the RAI target rename must happen before the split, same as the model's encoding
+    return prepare_dataframe(df, rename_target=RAI_TARGET_COLUMN)
 
 
 def save_split(directory, split_df):

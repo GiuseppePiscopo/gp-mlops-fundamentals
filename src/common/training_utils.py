@@ -49,6 +49,22 @@ def prepare_data(df):
     return X_train, X_test, y_train, y_test
 
 
+def prepare_dataframe(df, rename_target=None):
+    """Same transform as prepare_data, but keeps a DataFrame so column names survive.
+
+    prepare_data returns numpy arrays, which is fine for training but loses the feature
+    names needed by the Responsible AI dashboard and the monitoring drift reference.
+    dtype=int (not the pandas default bool) keeps the dummy columns numeric.
+    """
+    df = df.drop(columns=DROP_COLUMNS)
+    if rename_target:
+        df = df.rename(columns={TARGET_COLUMN: rename_target})
+    df = pd.get_dummies(df, columns=CATEGORICAL_COLUMNS, drop_first=True, dtype=int)
+
+    # same random_state/test_size as prepare_data
+    return train_test_split(df, test_size=0.20, random_state=RANDOM_SEED)
+
+
 def eval_model(model, X_test, y_test):
     y_hat = model.predict(X_test)
 
