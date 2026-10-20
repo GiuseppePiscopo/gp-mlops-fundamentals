@@ -52,25 +52,28 @@ def parse_args():
 
 def load_base_file(args):
     with open(args.base_file, encoding="utf-8") as f:
-        base = json.load(f)["input_data"][0]
-    return base
+        split = json.load(f)["input_data"]
+    columns = split["columns"]
+    base = dict(zip(columns, split["data"][0]))
+    return columns, base
 
 
 def make_drifted_row(base, rng):
-    row = list(base)
+    row = dict(base)
     # training means: Hour ~11.5, Temperature ~12.9C, Humidity ~58%.
     # Drift: heatwave nights, far from the bulk of the training data.
-    row[0] = rng.choice([2, 3, 4])
-    row[1] = round(rng.gauss(33.0, 1.5), 1)
-    row[2] = int(rng.gauss(25, 4))
+    row["Hour"] = rng.choice([2, 3, 4])
+    row["Temperature(°C)"] = round(rng.gauss(33.0, 1.5), 1)
+    row["Humidity(%)"] = int(rng.gauss(25, 4))
     return row
 
 
-def send_drifted_requests(args, base):
+def send_drifted_requests(args, columns, base):
     rng = random.Random(42)
     failures = 0
     for i in range(args.count):
-        payload = {"input_data": [make_drifted_row(base, rng)]}
+        row = make_drifted_row(base, rng)
+        payload = {"input_data": {"columns": columns, "index": [0], "data": [[row[c] for c in columns]]}}
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as tmp:
             json.dump(payload, tmp)
             tmp_path = tmp.name
@@ -105,9 +108,9 @@ def send_drifted_requests(args, base):
 def main():
     args = parse_args()
 
-    base = load_base_file(args)
+    columns, base = load_base_file(args)
 
-    failures = send_drifted_requests(args, base)
+    failures = send_drifted_requests(args, columns, base)
     if failures:
         sys.exit(1)
 

@@ -68,7 +68,7 @@ Confirm that the endpoint provisioning state is `Succeeded` and that the traffic
 
 ### Test with the Azure ML CLI
 
-The registered model (`random_forest/train.py`, no MLflow signature) expects `input_data` to be a numeric matrix containing the raw values as they come out of `prepare_data` in `common/training_utils.py`: `Date` column dropped, categorical columns `Seasons`/`Holiday`/`Functioning Day` one-hot encoded (`drop_first=True`), no target column. The provided payload has that specific shape. It is a sample row taken from `data/rai-train/data.csv`, where the same processing is applied, and the same encoding as training is used.
+The registered model expects an `input_data` payload in pandas `split` format: `columns` lists the 14 engineered features produced by `prepare_dataframe` in `common/training_utils.py` (`Date` column dropped, categorical columns `Seasons`/`Holiday`/`Functioning Day` one-hot encoded with `drop_first=True`, no target column), and `data` holds the rows. The provided payload is a sample row taken from `data/rai-train/data.csv`, where the same processing is applied.
 
 Invoke the endpoint with the test payload:
 
@@ -238,7 +238,7 @@ az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name b
 
 ### Create the drift reference dataset
 
-The blue model has no MLflow signature, so the drift reference is materialized explicitly from the training data, encoded as the model consumes it. Generate it locally:
+The drift reference is materialized from the training data, encoded as the model consumes it. Generate it locally:
 
 ```cmd
 python .\tools\prepare_monitoring_reference.py
@@ -286,11 +286,15 @@ python .\tools\simulate_drift.py --count 50
 
 ### Verify collected data from blue
 
-The data collector writes logged records to the workspace's default datastore under `modelDataCollector/<endpoint>/<deployment>/<collection>/`, one JSON Lines file per rolling window. Data appears a few minutes after the requests, once the window rolls over. Blue is a no-code MLflow deployment without a signature, so it collects only `model_outputs`, not `model_inputs`. Inspect what blue collected:
+The data collector writes logged records to the workspace's default datastore under `modelDataCollector/<endpoint>/<deployment>/<collection>/`, one JSON Lines file per rolling window. Data appears a few minutes after the requests, once the window rolls over. Inspect what blue collected:
 
 ```cmd
+python .\tools\show_collected_data.py --deployment blue
+
 python .\tools\show_collected_data.py --deployment blue --collection model_outputs
 ```
+
+The first command reads `model_inputs` (the default), the second reads `model_outputs`.
 
 ### Check the monitor run and the alert email
 
@@ -330,7 +334,7 @@ az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name g
 
 ### Verify collected data from green
 
-The green scoring script logs its inputs and outputs explicitly with the monitoring SDK `Collector`, so unlike blue it also produces `model_inputs`. Inspect what green collected:
+The green scoring script logs its inputs and outputs explicitly with the monitoring SDK `Collector`. Inspect what green collected:
 
 ```cmd
 python .\tools\show_collected_data.py --deployment green

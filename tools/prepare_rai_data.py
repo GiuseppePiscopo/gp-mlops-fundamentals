@@ -10,7 +10,7 @@ import shutil
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from common.training_utils import TARGET_COLUMN, get_data, prepare_dataframe  # noqa: E402
+from common.training_utils import get_data, prepare_dataframe  # noqa: E402
 
 SOURCE_CSV = "data/sample/SeoulBikeData.csv"
 TRAIN_DIR = "data/rai-train"

@@ -2,17 +2,12 @@ import argparse
 
 import mlflow
 import mlflow.sklearn
-import pandas as pd
+from mlflow.models import infer_signature
 from sklearn.linear_model import Ridge
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from common.training_utils import RANDOM_SEED, eval_model, get_data
-
-TARGET_COLUMN = "Rented Bike Count"
-CATEGORICAL_COLUMNS = ["Seasons", "Holiday", "Functioning Day"]
-DROP_COLUMNS = ["Date"]
+from common.training_utils import RANDOM_SEED, TARGET_COLUMN, eval_model, get_data, prepare_dataframe
 
 
 def parse_args():
@@ -31,16 +26,14 @@ def parse_args():
 
 
 def prepare_data(df):
-    print("Preparing data...")
+    train_df, test_df = prepare_dataframe(df)
 
-    df = df.drop(columns=DROP_COLUMNS)
-    df = pd.get_dummies(df, columns=CATEGORICAL_COLUMNS, drop_first=True)
+    X_train = train_df.drop(columns=[TARGET_COLUMN])
+    y_train = train_df[TARGET_COLUMN]
+    X_test = test_df.drop(columns=[TARGET_COLUMN])
+    y_test = test_df[TARGET_COLUMN]
 
-    X = df.drop(columns=[TARGET_COLUMN]).values
-    y = df[TARGET_COLUMN].values
-
-    # fixed seed: same split as the baseline Ridge and Random Forest scripts
-    return train_test_split(X, y, test_size=0.20, random_state=RANDOM_SEED)
+    return X_train, X_test, y_train, y_test
 
 
 def train_model(alpha, X_train, y_train):
@@ -72,7 +65,14 @@ def main(args):
         # evaluate model
         eval_model(model, X_test, y_test)
 
-        mlflow.sklearn.log_model(model, artifact_path="model")
+        signature = infer_signature(X_train.head(5), model.predict(X_train.head(5)))
+
+        mlflow.sklearn.log_model(
+            model,
+            artifact_path="model",
+            signature=signature,
+            extra_pip_requirements=["azureml-ai-monitoring"],
+        )
 
 
 # run script

@@ -3,6 +3,7 @@ import json
 import os
 
 import mlflow
+import pandas as pd
 
 
 def _find_mlmodel_dir(root):
@@ -29,9 +30,9 @@ def init():
 def run(raw_data):
     print("Request received")
 
-    # same contract as the remote no-code MLflow deployment: pre-processed numeric matrix
-    records = json.loads(raw_data)["input_data"]
-    predictions = model.predict(records)
+    # same contract as the remote no-code MLflow deployment: `input_data` in pandas split format
+    split = json.loads(raw_data)["input_data"]
+    predictions = model.predict(pd.DataFrame(split["data"], columns=split["columns"]))
 
     print("Request processed")
 

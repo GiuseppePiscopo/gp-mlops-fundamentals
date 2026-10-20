@@ -1,5 +1,24 @@
 {
-  "input_data": [
-    [3, 34.5, 25, 1.1, 1980, 12.0, 0.0, 0.0, 0.0, 0, 1, 0, 1, 1]
-  ]
+  "input_data": {
+    "columns": [
+      "Hour",
+      "Temperature(°C)",
+      "Humidity(%)",
+      "Wind speed (m/s)",
+      "Visibility (10m)",
+      "Dew point temperature(°C)",
+      "Solar Radiation (MJ/m2)",
+      "Rainfall(mm)",
+      "Snowfall (cm)",
+      "Seasons_Spring",
+      "Seasons_Summer",
+      "Seasons_Winter",
+      "Holiday_No Holiday",
+      "Functioning Day_Yes"
+    ],
+    "index": [0],
+    "data": [
+      [3, 34.5, 25, 1.1, 1980, 12.0, 0.0, 0.0, 0.0, 0, 1, 0, 1, 1]
+    ]
+  }
 }

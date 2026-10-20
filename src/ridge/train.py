@@ -2,9 +2,10 @@ import argparse
 
 import mlflow
 import mlflow.sklearn
+from mlflow.models import infer_signature
 from sklearn.linear_model import Ridge
 
-from common.training_utils import RANDOM_SEED, eval_model, get_data, prepare_data
+from common.training_utils import RANDOM_SEED, TARGET_COLUMN, eval_model, get_data, prepare_dataframe
 
 
 def parse_args():
@@ -22,6 +23,17 @@ def parse_args():
     return args
 
 
+def prepare_data(df):
+    train_df, test_df = prepare_dataframe(df)
+
+    X_train = train_df.drop(columns=[TARGET_COLUMN])
+    y_train = train_df[TARGET_COLUMN]
+    X_test = test_df.drop(columns=[TARGET_COLUMN])
+    y_test = test_df[TARGET_COLUMN]
+
+    return X_train, X_test, y_train, y_test
+
+
 def main(args):
     with mlflow.start_run():
         # read data
@@ -36,7 +48,14 @@ def main(args):
         # evaluate model
         eval_model(model, X_test, y_test)
 
-        mlflow.sklearn.log_model(model, artifact_path="model")
+        signature = infer_signature(X_train.head(5), model.predict(X_train.head(5)))
+
+        mlflow.sklearn.log_model(
+            model,
+            artifact_path="model",
+            signature=signature,
+            extra_pip_requirements=["azureml-ai-monitoring"],
+        )
 
 
 def train_model(alpha, X_train, y_train):
