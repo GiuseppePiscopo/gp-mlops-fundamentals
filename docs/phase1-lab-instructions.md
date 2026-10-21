@@ -2,6 +2,22 @@
 
 See the [README](../README.md) for overview and instructions on setting up the MLOps Fundamentals capstone project.
 
+## Set the Git repository URL
+
+Set the Git repository URL in every new terminal or session before submitting jobs, so Azure ML records the commit, branch, and repository in the job properties.
+
+From PowerShell:
+
+```powershell
+$env:AZUREML_GIT_REPOSITORY_URI = "https://bitbucket.org/braincrumbz/mlops-fundamentals-poc.git"
+```
+
+From Windows Command Prompt:
+
+```cmd
+set AZUREML_GIT_REPOSITORY_URI=https://bitbucket.org/braincrumbz/mlops-fundamentals-poc.git
+```
+
 ## Create a Compute cluster
 
 Confirm the compute cluster doesn't already exist:
