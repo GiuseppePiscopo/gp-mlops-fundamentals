@@ -4,7 +4,25 @@ See the [README](../README.md) for overview and instructions on setting up the M
 
 ## Set the Git repository URL
 
-Set the Git repository URL in every new terminal or session before submitting jobs, so Azure ML records the commit, branch, and repository in the job properties.
+### Update the local Git remote
+
+Set the remote URL without the username and store the API token. Replace `<bitbucket-username>` with the Bitbucket username.
+
+From PowerShell:
+
+```powershell
+.\tools\Set-GitRemote.ps1 -Username <bitbucket-username>
+```
+
+Verify the remote:
+
+```powershell
+.\tools\Test-GitRemote.ps1
+```
+
+### Set the Azure ML repository URI
+
+If the local remote cannot be changed, set the Git repository URL in every new terminal or session before submitting jobs, so Azure ML records the commit, branch, and repository in the job properties.
 
 From PowerShell:
 
