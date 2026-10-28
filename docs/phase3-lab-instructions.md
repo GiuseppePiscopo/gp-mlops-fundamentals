@@ -270,15 +270,15 @@ gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/branches/main/protection --jq
 Work on a feature branch and open a PR for any change under `src/` (here, only a comment):
 
 ```powershell
-git switch -c feature/trigger-check
+git switch -c feature/trigger-check-1
 
 Add-Content .\src\random_forest\train.py "`n# trigger check nr 1"
 
 git commit -am "chore(repo): verifica il trigger del workflow nr 1"
 
-git push github feature/trigger-check
+git push github feature/trigger-check-1
 
-gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head feature/trigger-check --title "Verify workflow trigger" --body "Trigger check"
+gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head feature/trigger-check-1 --title "Verify workflow trigger nr 1" --body "Trigger check"
 ```
 
 Confirm that opening the PR starts no run (the last run is still the previous one):
@@ -290,7 +290,7 @@ gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.
 Merge the PR and confirm that a new run starts:
 
 ```powershell
-gh pr merge feature/trigger-check --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
+gh pr merge feature/trigger-check-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
 
 gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 3
 ```
@@ -310,17 +310,17 @@ git pull github main
 Reduce the Random Forest capacity so the model misses the gate (`n_estimators=50`, `max_depth=5` gives `R2` of about `0.73`), and merge it through a PR:
 
 ```powershell
-git switch -c experiment/degrade-model
+git switch -c experiment/degrade-model-1
 
 (Get-Content .\pipelines\gp-mof-capstone-job-rf.yml) -replace 'n_estimators: 100', 'n_estimators: 50' -replace 'max_depth: 10', 'max_depth: 5' | Set-Content .\pipelines\gp-mof-capstone-job-rf.yml
 
 git commit -am "test(repo): degrada intenzionalmente il modello"
 
-git push github experiment/degrade-model
+git push github experiment/degrade-model-1
 
-gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head experiment/degrade-model --title "Degrade model" --body "Gate failure test"
+gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head experiment/degrade-model-1 --title "Degrade model nr 1" --body "Gate failure test"
 
-gh pr merge experiment/degrade-model --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
+gh pr merge experiment/degrade-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
 ```
 
 In a dedicated terminal, watch the run, and confirm that `train-and-evaluate` fails at the "Evaluate and gate" step and `deploy` is skipped:
@@ -350,15 +350,15 @@ git switch main
 
 git pull github main
 
-git switch -c fix/restore-model
+git switch -c fix/restore-model-1
 
 git revert --no-edit HEAD
 
-git push github fix/restore-model
+git push github fix/restore-model-1
 
-gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head fix/restore-model --title "Restore model" --body "Restore the baseline Random Forest parameters"
+gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head fix/restore-model-1 --title "Restore model nr 1" --body "Restore the baseline Random Forest parameters"
 
-gh pr merge fix/restore-model --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
+gh pr merge fix/restore-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
 ```
 
 In a dedicated terminal, watch the run until `deploy` waits for approval, which confirms that the gate passed:
