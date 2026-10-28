@@ -210,7 +210,7 @@ gh workflow run ml-pipeline.yml --repo GiuseppePiscopo/gp-mlops-fundamentals --r
 
 ### Follow the run
 
-Watch the run until the `deploy` job waits for approval, after the training job and the gate have passed:
+In a dedicated terminal, watch the run until the `deploy` job waits for approval, after the training job and the gate have passed:
 
 ```powershell
 $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 1 --json databaseId --jq ".[0].databaseId"
@@ -223,16 +223,14 @@ gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 Approve the deployment (alternatively, open the run in GitHub and use "Review deployments"):
 
 ```powershell
+$runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 1 --json databaseId --jq ".[0].databaseId"
+
 $envId = [int](gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --jq .id)
 
 @{ environment_ids = @($envId); state = "approved"; comment = "Approved" } | ConvertTo-Json -Compress | gh api --method POST repos/GiuseppePiscopo/gp-mlops-fundamentals/actions/runs/$runId/pending_deployments --input -
 ```
 
-Wait for the run to complete:
-
-```powershell
-gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
-```
+The watch in the dedicated terminal ends when the run completes.
 
 ### Verify the deployment
 
@@ -325,7 +323,7 @@ gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head exp
 gh pr merge experiment/degrade-model --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
 ```
 
-Watch the run, and confirm that `train-and-evaluate` fails at the "Evaluate and gate" step and `deploy` is skipped:
+In a dedicated terminal, watch the run, and confirm that `train-and-evaluate` fails at the "Evaluate and gate" step and `deploy` is skipped:
 
 ```powershell
 $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 1 --json databaseId --jq ".[0].databaseId"
@@ -363,7 +361,7 @@ gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head fix
 gh pr merge fix/restore-model --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
 ```
 
-Watch the run until `deploy` waits for approval, which confirms that the gate passed:
+In a dedicated terminal, watch the run until `deploy` waits for approval, which confirms that the gate passed:
 
 ```powershell
 $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 1 --json databaseId --jq ".[0].databaseId"
@@ -376,12 +374,14 @@ gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 Approve the pending deployment:
 
 ```powershell
+$runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 1 --json databaseId --jq ".[0].databaseId"
+
 $envId = [int](gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --jq .id)
 
 @{ environment_ids = @($envId); state = "approved"; comment = "Approved" } | ConvertTo-Json -Compress | gh api --method POST repos/GiuseppePiscopo/gp-mlops-fundamentals/actions/runs/$runId/pending_deployments --input -
-
-gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 ```
+
+The watch in the dedicated terminal ends when the run completes.
 
 ### Verify the production model
 
