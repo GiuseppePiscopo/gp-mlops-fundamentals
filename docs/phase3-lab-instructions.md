@@ -459,12 +459,46 @@ Delete the endpoint; this also removes its blue deployment:
 az ml online-endpoint delete --name gp-mof-capstone-endpoint --yes
 ```
 
+### Reduce the access exposure
+
+To keep the GitHub Actions access for future runs with less exposure, remove only the `Contributor` role assignment: the app registration, federated credentials and GitHub secrets stay, but the workflow can't use any Azure resource.
+
+```powershell
+$appId = az ad app list --display-name "gp-mof-capstone-app-ghactions" --query "[0].appId" -o tsv
+
+$subscriptionId = az account show --query id -o tsv
+
+az role assignment delete --assignee $appId --role contributor --scope "/subscriptions/$subscriptionId/resourceGroups/gp-mof-rg-dev"
+```
+
+Verify that no role assignment is left:
+
+```powershell
+az role assignment list --assignee $appId --scope "/subscriptions/$subscriptionId/resourceGroups/gp-mof-rg-dev" -o table
+```
+
+### Restore the access for GitHub Actions
+
+Before a new run, assign the role again:
+
+```powershell
+$appId = az ad app list --display-name "gp-mof-capstone-app-ghactions" --query "[0].appId" -o tsv
+
+$subscriptionId = az account show --query id -o tsv
+
+az role assignment create --assignee $appId --role contributor --scope "/subscriptions/$subscriptionId/resourceGroups/gp-mof-rg-dev"
+```
+
+Then recreate the endpoint as in "Recreate the managed online endpoint" in Part 1, and the blue deployment as in "Create the blue deployment" in Part 5.
+
 ### Remove the Azure access for GitHub Actions
 
-Delete the role assignment, then the app registration; this also removes its federated credentials and service principal:
+To remove the access completely instead, delete the role assignment (skip it if already removed above), then the app registration; this also removes its federated credentials and service principal. Set `$appId` and `$subscriptionId` as in "Reduce the access exposure" if the terminal is new:
 
 ```powershell
 az role assignment delete --assignee $appId --role contributor --scope "/subscriptions/$subscriptionId/resourceGroups/gp-mof-rg-dev"
 
 az ad app delete --id $appId
 ```
+
+To recreate it, repeat Part 3: the app registration gets a new client ID, so update the `AZURE_CLIENT_ID` secret in "Create the GitHub secrets".
