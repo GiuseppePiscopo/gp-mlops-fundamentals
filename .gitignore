@@ -75,6 +75,9 @@ data/monitoring-reference/
 data/pipeline-rf-prepared/
 data/pipeline-rf-model/
 
+# Local outputs for the federated credentials (generated from the config templates)
+config/*.local.json
+
 # Local outputs for the custom scoring model export
 model-mlflow/
 model/

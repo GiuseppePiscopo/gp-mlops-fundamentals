@@ -74,7 +74,7 @@ From now on, every `gh` command targets the repository explicitly with `--repo G
 
 ### Create the app registration and service principal
 
-Create the Microsoft Entra ID app registration and its service principal, and give it `Contributor` on the resource group:
+Create the Microsoft Entra ID app registration and its service principal, and assign `Contributor` on the resource group:
 
 ```powershell
 $appId = az ad app create --display-name "gp-mof-capstone-app-ghactions" --query appId -o tsv
@@ -88,12 +88,30 @@ az role assignment create --assignee $appId --role contributor --scope "/subscri
 
 ### Create the federated credentials
 
-The `deploy` job runs in the `production` environment, while `train-and-evaluate` runs on the `main` branch, so each needs its own federated credential:
+Extract the subject prefix of the repository:
 
 ```powershell
-az ad app federated-credential create --id $appId --parameters "@.\config\gp-mof-capstone-fic-production.json"
+$subjectPrefix = gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/actions/oidc/customization/sub --jq .sub_claim_prefix
+```
 
-az ad app federated-credential create --id $appId --parameters "@.\config\gp-mof-capstone-fic-main.json"
+Generate the credential files from the templates (the `*.local.json` outputs are git-ignored):
+
+```powershell
+(Get-Content .\config\gp-mof-capstone-fic-production.template.json) -replace '<SUBJECT_PREFIX>', $subjectPrefix | Set-Content -Encoding ascii .\config\gp-mof-capstone-fic-production.local.json
+
+(Get-Content .\config\gp-mof-capstone-fic-main.template.json) -replace '<SUBJECT_PREFIX>', $subjectPrefix | Set-Content -Encoding ascii .\config\gp-mof-capstone-fic-main.local.json
+```
+
+Create the federated credential for the `deploy` job, which runs in the `production` environment:
+
+```powershell
+az ad app federated-credential create --id $appId --parameters "@.\config\gp-mof-capstone-fic-production.local.json"
+```
+
+Create the federated credential for the `train-and-evaluate` job, which runs on the `main` branch:
+
+```powershell
+az ad app federated-credential create --id $appId --parameters "@.\config\gp-mof-capstone-fic-main.local.json"
 ```
 
 Verify them:
@@ -104,7 +122,7 @@ az ad app federated-credential list --id $appId --query "[].{name:name, subject:
 
 ### Create the GitHub secrets
 
-Create the three non-sensitive identifiers used by `azure/login@v2` (OIDC needs no secret credentials), plus the workspace and resource group names used by the workflow. Run this in the same terminal as the commands above, so `$appId` and `$subscriptionId` are set:
+Create the identifiers used by `azure/login@v2` (not sensitive: OIDC needs no credentials) and the workspace and resource group names used by the workflow. Run this in the same terminal as the commands above, so `$appId` and `$subscriptionId` are set:
 
 ```powershell
 $repo = "GiuseppePiscopo/gp-mlops-fundamentals"
@@ -148,6 +166,12 @@ Commit the Phase 3 files if they aren't committed yet, then push the repository.
 git status --short
 
 git push github main
+```
+
+Check that a run started for the pushed commit:
+
+```powershell
+gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 3
 ```
 
 If no run starts, trigger it manually:

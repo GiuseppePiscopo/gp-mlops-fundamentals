@@ -1,6 +1,6 @@
 {
   "name": "gp-mof-capstone-fic-ghactions-main",
   "issuer": "https://token.actions.githubusercontent.com",
-  "subject": "repo:GiuseppePiscopo/gp-mlops-fundamentals:ref:refs/heads/main",
+  "subject": "<SUBJECT_PREFIX>:ref:refs/heads/main",
   "audiences": ["api://AzureADTokenExchange"]
 }
