@@ -272,9 +272,9 @@ Work on a feature branch and open a PR for any change under `src/` (here, only a
 ```powershell
 git switch -c feature/trigger-check
 
-Add-Content .\src\random_forest\train.py "`n# trigger check"
+Add-Content .\src\random_forest\train.py "`n# trigger check nr 1"
 
-git commit -am "chore(repo): verifica il trigger del workflow"
+git commit -am "chore(repo): verifica il trigger del workflow nr 1"
 
 git push github feature/trigger-check
 
