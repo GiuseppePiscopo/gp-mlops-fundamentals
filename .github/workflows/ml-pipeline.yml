@@ -12,23 +12,23 @@ env:
   DEPLOYMENT_NAME: blue
 
 jobs:
-  # Runs without an environment: its OIDC subject is the main branch (config/gp-mof-capstone-fic-main.json)
+  # Runs without an environment: its OIDC subject is the main branch
   train-and-evaluate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       id-token: write
       contents: read
     outputs:
       model_version: ${{ steps.register.outputs.model_version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -41,10 +41,12 @@ jobs:
 
       - name: Run training job
         id: train
+        timeout-minutes: 20
         run: |
           JOB_NAME=gp-mof-capstone-rf-${{ github.run_id }}-${{ github.run_attempt }}
           echo "job_name=$JOB_NAME" >> "$GITHUB_OUTPUT"
-          az ml job create --file pipelines/gp-mof-capstone-job-rf.yml --name "$JOB_NAME" --stream
+          az ml job create --file pipelines/gp-mof-capstone-job-rf.yml --name "$JOB_NAME" -o none
+          bash tools/wait-for-job.sh "$JOB_NAME"
 
       - name: Evaluate and gate
         run: |
@@ -66,16 +68,16 @@ jobs:
   # The production environment requires a reviewer: the job waits for approval after the automatic gate has passed
   deploy:
     needs: train-and-evaluate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: production
     permissions:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

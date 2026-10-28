@@ -158,6 +158,34 @@ gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --jq 
 
 ## Part 5: First pipeline run
 
+### Create the blue deployment
+
+The `deploy` job updates the existing `blue` deployment, so create it before starting the workflow. Confirm the endpoint exists and has no deployments yet:
+
+```cmd
+az ml online-deployment list --endpoint-name gp-mof-capstone-endpoint -o table
+```
+
+Create the blue deployment and route all traffic to it:
+
+```cmd
+az ml online-deployment create --file .\config\gp-mof-capstone-deployment-blue.yml
+
+az ml online-endpoint update --name gp-mof-capstone-endpoint --traffic "blue=100"
+```
+
+Confirm that the deployment provisioning state is `Succeeded`:
+
+```cmd
+az ml online-deployment show --name blue --endpoint-name gp-mof-capstone-endpoint --query provisioning_state -o tsv
+```
+
+Verify the endpoint:
+
+```cmd
+az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name blue --request-file data\test-request\request.json
+```
+
 ### Push `main` to GitHub
 
 Commit the Phase 3 files if they aren't committed yet, then push the repository. This first push goes straight to `main` because branch protection isn't enabled yet, and it starts the workflow:
@@ -178,28 +206,6 @@ If no run starts, trigger it manually:
 
 ```powershell
 gh workflow run ml-pipeline.yml --repo GiuseppePiscopo/gp-mlops-fundamentals --ref main
-```
-
-### Create the blue deployment
-
-The deployment job updates the existing `blue` deployment, so create it now, while the training job runs (the deployment takes several minutes, more on a cold start). Approve the workflow deployment only after this step completes. Confirm the endpoint exists and has no deployments yet:
-
-```cmd
-az ml online-deployment list --endpoint-name gp-mof-capstone-endpoint -o table
-```
-
-Create the blue deployment and route all traffic to it:
-
-```cmd
-az ml online-deployment create --file .\config\gp-mof-capstone-deployment-blue.yml
-
-az ml online-endpoint update --name gp-mof-capstone-endpoint --traffic "blue=100"
-```
-
-Verify the endpoint:
-
-```cmd
-az ml online-endpoint invoke --name gp-mof-capstone-endpoint --deployment-name blue --request-file data\test-request\request.json
 ```
 
 ### Follow the run
