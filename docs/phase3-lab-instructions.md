@@ -267,10 +267,12 @@ gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/branches/main/protection --jq
 
 ### Verify that the workflow triggers on merge
 
-Work on a feature branch and open a PR for any change under `src/` (here, only a comment):
+Work on a feature branch created from `github/main` and open a PR for any change under `src/` (here, only a comment):
 
 ```powershell
-git switch -c feature/trigger-check-1
+git fetch github
+
+git switch -c feature/trigger-check-1 --no-track github/main
 
 Add-Content .\src\random_forest\train.py "`n# trigger check nr 1"
 
@@ -295,12 +297,14 @@ gh pr merge feature/trigger-check-1 --repo GiuseppePiscopo/gp-mlops-fundamentals
 gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 3
 ```
 
-Approve this run as in Part 5, then sync the local `main`:
+Approve this run as in Part 5, then sync the local `main` and delete the branch (`-D` because the squash merge rewrites the commits):
 
 ```powershell
 git switch main
 
 git pull github main
+
+git branch -D feature/trigger-check-1
 ```
 
 ## Part 7: End-to-end test
@@ -310,7 +314,9 @@ git pull github main
 Reduce the Random Forest capacity so the model misses the gate (`n_estimators=50`, `max_depth=5` gives `R2` of about `0.73`), and merge it through a PR:
 
 ```powershell
-git switch -c experiment/degrade-model-1
+git fetch github
+
+git switch -c experiment/degrade-model-1 --no-track github/main
 
 (Get-Content .\pipelines\gp-mof-capstone-job-rf.yml) -replace 'n_estimators: 100', 'n_estimators: 50' -replace 'max_depth: 10', 'max_depth: 5' | Set-Content .\pipelines\gp-mof-capstone-job-rf.yml
 
@@ -321,6 +327,16 @@ git push github experiment/degrade-model-1
 gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head experiment/degrade-model-1 --title "Degrade model nr 1" --body "Gate failure test"
 
 gh pr merge experiment/degrade-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
+```
+
+Sync the local `main` and delete the branch:
+
+```powershell
+git switch main
+
+git pull github main
+
+git branch -D experiment/degrade-model-1
 ```
 
 In a dedicated terminal, watch the run, and confirm that `train-and-evaluate` fails at the "Evaluate and gate" step and `deploy` is skipped:
@@ -343,14 +359,12 @@ az ml online-deployment show --name blue --endpoint-name gp-mof-capstone-endpoin
 
 ### Restore the model
 
-Sync `main`, revert the degrading commit (the merge commit of the degrade PR), and merge it through a PR:
+Revert the degrading commit (the merge commit of the degrade PR) on a new branch, and merge it through a PR:
 
 ```powershell
-git switch main
+git fetch github
 
-git pull github main
-
-git switch -c fix/restore-model-1
+git switch -c fix/restore-model-1 --no-track github/main
 
 $degradeSha = gh pr view experiment/degrade-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --json mergeCommit --jq .mergeCommit.oid
 
@@ -361,6 +375,16 @@ git push github fix/restore-model-1
 gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head fix/restore-model-1 --title "Restore model nr 1" --body "Restore the baseline Random Forest parameters"
 
 gh pr merge fix/restore-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
+```
+
+Sync the local `main` and delete the branch:
+
+```powershell
+git switch main
+
+git pull github main
+
+git branch -D fix/restore-model-1
 ```
 
 In a dedicated terminal, watch the run until `deploy` waits for approval, which confirms that the gate passed:
