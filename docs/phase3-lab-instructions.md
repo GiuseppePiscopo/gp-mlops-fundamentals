@@ -330,7 +330,7 @@ $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-
 
 gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 
-gh run view $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
+gh run view $runId --repo GiuseppePiscopo/gp-mlops-fundamentals --log-failed | Select-Object -Last 8
 ```
 
 Confirm that no new model version was registered, and that the deployed model hasn't changed:
@@ -343,7 +343,7 @@ az ml online-deployment show --name blue --endpoint-name gp-mof-capstone-endpoin
 
 ### Restore the model
 
-Sync `main`, revert the degrading commit, and merge it through a PR:
+Sync `main`, revert the degrading commit (the merge commit of the degrade PR), and merge it through a PR:
 
 ```powershell
 git switch main
@@ -352,7 +352,9 @@ git pull github main
 
 git switch -c fix/restore-model-1
 
-git revert --no-edit HEAD
+$degradeSha = gh pr view experiment/degrade-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --json mergeCommit --jq .mergeCommit.oid
+
+git revert --no-edit $degradeSha
 
 git push github fix/restore-model-1
 
