@@ -330,7 +330,7 @@ $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-
 
 gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 
-gh run view $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
+gh run view $runId --repo GiuseppePiscopo/gp-mlops-fundamentals --log-failed | Select-Object -Last 8
 ```
 
 Confirm that no new model version was registered, and that the deployed model hasn't changed:
