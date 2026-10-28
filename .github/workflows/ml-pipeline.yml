@@ -1,0 +1,105 @@
+name: ML Training Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'pipelines/**']
+  workflow_dispatch:
+
+env:
+  MODEL_NAME: gp-mof-capstone-model
+  ENDPOINT_NAME: gp-mof-capstone-endpoint
+  DEPLOYMENT_NAME: blue
+
+jobs:
+  # Runs without an environment: its OIDC subject is the main branch (config/gp-mof-capstone-fic-main.json)
+  train-and-evaluate:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      model_version: ${{ steps.register.outputs.model_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up Azure ML CLI
+        run: |
+          az extension add --name ml --yes
+          az configure --defaults group=${{ secrets.GP_MOF_AZURE_RESOURCE_GROUP_DEV }} workspace=${{ secrets.GP_MOF_AZURE_WORKSPACE_DEV }}
+
+      - name: Run training job
+        id: train
+        run: |
+          JOB_NAME=gp-mof-capstone-rf-${{ github.run_id }}-${{ github.run_attempt }}
+          echo "job_name=$JOB_NAME" >> "$GITHUB_OUTPUT"
+          az ml job create --file pipelines/gp-mof-capstone-job-rf.yml --name "$JOB_NAME" --stream
+
+      - name: Evaluate and gate
+        run: |
+          python -m pip install mlflow==2.19.0 azureml-mlflow==1.60.0
+          python tools/evaluate.py --job_name ${{ steps.train.outputs.job_name }}
+
+      - name: Register model as staging
+        id: register
+        run: |
+          VERSION=$(az ml model create --name "$MODEL_NAME" \
+            --path azureml://jobs/${{ steps.train.outputs.job_name }}/outputs/artifacts/model \
+            --type mlflow_model \
+            --set tags.stage=staging \
+            --set tags.job=${{ steps.train.outputs.job_name }} \
+            --set tags.git_sha=${{ github.sha }} \
+            --query version -o tsv)
+          echo "model_version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  # The production environment requires a reviewer: the job waits for approval after the automatic gate has passed
+  deploy:
+    needs: train-and-evaluate
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up Azure ML CLI
+        run: |
+          az extension add --name ml --yes
+          az configure --defaults group=${{ secrets.GP_MOF_AZURE_RESOURCE_GROUP_DEV }} workspace=${{ secrets.GP_MOF_AZURE_WORKSPACE_DEV }}
+
+      - name: Deploy model to the endpoint
+        run: |
+          az ml online-deployment update --name "$DEPLOYMENT_NAME" --endpoint-name "$ENDPOINT_NAME" \
+            --set model=azureml:$MODEL_NAME:${{ needs.train-and-evaluate.outputs.model_version }}
+
+      - name: Smoke test the endpoint
+        run: |
+          az ml online-endpoint invoke --name "$ENDPOINT_NAME" --deployment-name "$DEPLOYMENT_NAME" \
+            --request-file data/test-request/request.json
+
+      - name: Promote model to production
+        run: |
+          for VERSION in $(az ml model list --name "$MODEL_NAME" --query "[?tags.stage=='production'].version" -o tsv); do
+            az ml model update --name "$MODEL_NAME" --version "$VERSION" --set tags.stage=archived
+          done
+          az ml model update --name "$MODEL_NAME" --version ${{ needs.train-and-evaluate.outputs.model_version }} \
+            --set tags.stage=production

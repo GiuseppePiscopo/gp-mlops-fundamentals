@@ -1,0 +1,6 @@
+{
+  "name": "gp-mof-capstone-fic-ghactions",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:GiuseppePiscopo/gp-mlops-fundamentals:environment:production",
+  "audiences": ["api://AzureADTokenExchange"]
+}
