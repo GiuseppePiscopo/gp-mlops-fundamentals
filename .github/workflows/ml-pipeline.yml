@@ -59,10 +59,11 @@ jobs:
           VERSION=$(az ml model create --name "$MODEL_NAME" \
             --path azureml://jobs/${{ steps.train.outputs.job_name }}/outputs/artifacts/model \
             --type mlflow_model \
+            --query version -o tsv)
+          az ml model update --name "$MODEL_NAME" --version "$VERSION" \
             --set tags.stage=staging \
             --set tags.job=${{ steps.train.outputs.job_name }} \
-            --set tags.git_sha=${{ github.sha }} \
-            --query version -o tsv)
+            --set tags.git_sha=${{ github.sha }}
           echo "model_version=$VERSION" >> "$GITHUB_OUTPUT"
 
   # The production environment requires a reviewer: the job waits for approval after the automatic gate has passed
