@@ -145,7 +145,7 @@ gh secret list --repo $repo
 Create the `production` environment with the current GitHub user as required reviewer (self-review is allowed, as you are the only maintainer):
 
 ```powershell
-$userId = [int](gh api user --jq .id)
+$userId = [long](gh api user --jq .id)
 
 @{ reviewers = @(@{ type = "User"; id = $userId }) } | ConvertTo-Json -Depth 4 -Compress | gh api --method PUT repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --input -
 ```
@@ -225,7 +225,7 @@ Approve the deployment (alternatively, open the run in GitHub and use "Review de
 ```powershell
 $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 1 --json databaseId --jq ".[0].databaseId"
 
-$envId = [int](gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --jq .id)
+$envId = [long](gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --jq .id)
 
 @{ environment_ids = @($envId); state = "approved"; comment = "Approved" } | ConvertTo-Json -Compress | gh api --method POST repos/GiuseppePiscopo/gp-mlops-fundamentals/actions/runs/$runId/pending_deployments --input -
 ```
@@ -376,7 +376,7 @@ Approve the pending deployment:
 ```powershell
 $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 1 --json databaseId --jq ".[0].databaseId"
 
-$envId = [int](gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --jq .id)
+$envId = [long](gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --jq .id)
 
 @{ environment_ids = @($envId); state = "approved"; comment = "Approved" } | ConvertTo-Json -Compress | gh api --method POST repos/GiuseppePiscopo/gp-mlops-fundamentals/actions/runs/$runId/pending_deployments --input -
 ```
