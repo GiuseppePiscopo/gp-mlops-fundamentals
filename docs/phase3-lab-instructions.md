@@ -120,7 +120,7 @@ Create the federated credential for the `train-and-evaluate` job, which runs on 
 az ad app federated-credential create --id $appId --parameters "@.\config\gp-mof-capstone-fic-pr.local.json"
 ```
 
-Verify them:
+Verify them. The output must list three credentials: names ending in `-ghactions`, `-ghactions-main`, and `-ghactions-pr`, with subjects ending in `:environment:production`, `:ref:refs/heads/main`, and `:pull_request`:
 
 ```powershell
 az ad app federated-credential list --id $appId --query "[].{name:name, subject:subject}" -o table
@@ -142,7 +142,11 @@ gh secret set AZURE_SUBSCRIPTION_ID --repo $repo --body $subscriptionId
 gh secret set GP_MOF_AZURE_WORKSPACE_DEV --repo $repo --body gp-mof-ws-dev
 
 gh secret set GP_MOF_AZURE_RESOURCE_GROUP_DEV --repo $repo --body gp-mof-rg-dev
+```
 
+Verify the secrets. The output must list the five secrets set above:
+
+```powershell
 gh secret list --repo $repo
 ```
 
@@ -295,7 +299,7 @@ git push github feature/trigger-check-1
 gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head feature/trigger-check-1 --title "Verify workflow trigger nr 1" --body "Trigger check"
 ```
 
-Confirm that opening the PR starts a run with the `pull_request` event, which trains and evaluates only (`deploy` is skipped). In a dedicated terminal, watch it:
+Confirm that opening the PR starts a run with the `pull_request` event, which trains and evaluates only (`deploy` is skipped). In a dedicated terminal, watch it until the run ends with the conclusion `success`:
 
 ```powershell
 $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --branch feature/trigger-check-1 --limit 1 --json databaseId --jq ".[0].databaseId"
@@ -303,7 +307,7 @@ $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-
 gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 ```
 
-Check that the PR check passed:
+Check that the PR check passed. The output must show `train-and-evaluate` with result `pass`:
 
 ```powershell
 gh pr checks feature/trigger-check-1 --repo GiuseppePiscopo/gp-mlops-fundamentals
@@ -347,7 +351,7 @@ git push github experiment/tune-model-1
 gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head experiment/tune-model-1 --title "Tune model parameters nr 1" --body "Gate failure test, then fix"
 ```
 
-In a dedicated terminal, watch the PR run, and confirm that `train-and-evaluate` fails at the "Evaluate and gate" step:
+In a dedicated terminal, watch the PR run. It must end with conclusion `failure` at the "Evaluate and gate" step in `train-and-evaluate`:
 
 ```powershell
 $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --branch experiment/tune-model-1 --limit 1 --json databaseId --jq ".[0].databaseId"
@@ -357,7 +361,7 @@ gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 gh run view $runId --repo GiuseppePiscopo/gp-mlops-fundamentals --log-failed | Select-Object -Last 8
 ```
 
-Confirm that the PR check failed (don't merge the PR), that no new model version was registered, and that the deployed model hasn't changed:
+Confirm that the PR check failed (don't merge the PR). The output must show `train-and-evaluate` with result `fail`; also confirm that no new model version was registered and that the deployed model hasn't changed:
 
 ```powershell
 gh pr checks experiment/tune-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals
@@ -381,7 +385,7 @@ git commit -am "fix(repo): usa parametri che superano il gate"
 git push github experiment/tune-model-1
 ```
 
-In a dedicated terminal, watch the new PR run (the latest one for the branch, not the failed one) until it passes:
+In a dedicated terminal, watch the new PR run (the latest one for the branch, not the failed one) until it ends with the conclusion `success`; `gh pr checks` must show `train-and-evaluate` with result `pass`:
 
 ```powershell
 $runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --branch experiment/tune-model-1 --limit 1 --json databaseId --jq ".[0].databaseId"
