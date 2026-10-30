@@ -1,0 +1,6 @@
+{
+  "name": "gp-mof-capstone-fic-ghactions-pr",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "<SUBJECT_PREFIX>:pull_request",
+  "audiences": ["api://AzureADTokenExchange"]
+}

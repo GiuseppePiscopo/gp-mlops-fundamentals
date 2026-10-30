@@ -1,10 +1,18 @@
 name: ML Training Pipeline
 
 on:
+  pull_request:
+    branches: [main]
+    paths: ['src/**', 'pipelines/**']
   push:
     branches: [main]
     paths: ['src/**', 'pipelines/**']
   workflow_dispatch:
+
+# A new push to a pull request cancels its previous run; runs on main are never cancelled
+concurrency:
+  group: ml-pipeline-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   MODEL_NAME: gp-mof-capstone-model
@@ -12,7 +20,8 @@ env:
   DEPLOYMENT_NAME: blue
 
 jobs:
-  # Runs without an environment: its OIDC subject is the main branch
+  # Runs without an environment: its OIDC subject is the main branch, or pull_request on pull requests
+  # (config/gp-mof-capstone-fic-main.template.json, config/gp-mof-capstone-fic-pr.template.json)
   train-and-evaluate:
     runs-on: ubuntu-24.04
     permissions:
@@ -55,6 +64,7 @@ jobs:
 
       - name: Register model as staging
         id: register
+        if: github.event_name != 'pull_request'
         run: |
           VERSION=$(az ml model create --name "$MODEL_NAME" \
             --path azureml://jobs/${{ steps.train.outputs.job_name }}/outputs/artifacts/model \
@@ -66,9 +76,15 @@ jobs:
             --set tags.git_sha=${{ github.sha }}
           echo "model_version=$VERSION" >> "$GITHUB_OUTPUT"
 
-  # The production environment requires a reviewer: the job waits for approval after the automatic gate has passed
+      - name: Cancel the training job if the run is cancelled
+        if: cancelled() && steps.train.outputs.job_name != ''
+        run: az ml job cancel --name "${{ steps.train.outputs.job_name }}" || true
+
+  # The production environment requires a reviewer: the job waits for approval after the automatic gate has passed.
+  # Pull requests only train and evaluate: the deployment starts after the merge.
   deploy:
     needs: train-and-evaluate
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     environment: production
     permissions:

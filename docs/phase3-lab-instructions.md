@@ -97,9 +97,9 @@ $subjectPrefix = gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/actions/oidc
 Generate the credential files from the templates (the `*.local.json` outputs are git-ignored):
 
 ```powershell
-(Get-Content .\config\gp-mof-capstone-fic-production.template.json) -replace '<SUBJECT_PREFIX>', $subjectPrefix | Set-Content -Encoding ascii .\config\gp-mof-capstone-fic-production.local.json
-
-(Get-Content .\config\gp-mof-capstone-fic-main.template.json) -replace '<SUBJECT_PREFIX>', $subjectPrefix | Set-Content -Encoding ascii .\config\gp-mof-capstone-fic-main.local.json
+foreach ($name in "production", "main", "pr") {
+  (Get-Content ".\config\gp-mof-capstone-fic-$name.template.json") -replace '<SUBJECT_PREFIX>', $subjectPrefix | Set-Content -Encoding ascii ".\config\gp-mof-capstone-fic-$name.local.json"
+}
 ```
 
 Create the federated credential for the `deploy` job, which runs in the `production` environment:
@@ -112,6 +112,12 @@ Create the federated credential for the `train-and-evaluate` job, which runs on 
 
 ```powershell
 az ad app federated-credential create --id $appId --parameters "@.\config\gp-mof-capstone-fic-main.local.json"
+```
+
+Create the federated credential for the `train-and-evaluate` job, which runs on pull requests:
+
+```powershell
+az ad app federated-credential create --id $appId --parameters "@.\config\gp-mof-capstone-fic-pr.local.json"
 ```
 
 Verify them:
@@ -248,11 +254,11 @@ The deployed version has `stage=production`; the previous production versions ar
 
 ### Protect the main branch
 
-Require a PR with one approving review before merging into `main`. Administrators aren't enforced, so as the only maintainer you can still merge your own PRs with `--admin`:
+Require a PR with one approving review, and the `train-and-evaluate` check passing on a branch that is up to date with `main`, before merging into `main`. Administrators aren't enforced, so as the only maintainer you can still merge your own PRs with `--admin`:
 
 ```powershell
 @{
-  required_status_checks = $null
+  required_status_checks = @{ strict = $true; contexts = @("train-and-evaluate") }
   enforce_admins = $false
   required_pull_request_reviews = @{ required_approving_review_count = 1 }
   restrictions = $null
@@ -262,10 +268,16 @@ Require a PR with one approving review before merging into `main`. Administrator
 Verify the protection:
 
 ```powershell
-gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/branches/main/protection --jq ".required_pull_request_reviews"
+gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/branches/main/protection --jq "{required_pull_request_reviews, required_status_checks}"
 ```
 
-### Verify that the workflow triggers on merge
+A PR that changes nothing under `src/` or `pipelines/` doesn't run the workflow, so the check is never reported: merge it with `--admin`. If `main` moves after the check passed, update the PR branch (this restarts the check):
+
+```powershell
+gh pr update-branch <BRANCH> --repo GiuseppePiscopo/gp-mlops-fundamentals
+```
+
+### Verify that the workflow runs on the PR and on merge
 
 Work on a feature branch created from `github/main` and open a PR for any change under `src/` (here, only a comment):
 
@@ -283,13 +295,21 @@ git push github feature/trigger-check-1
 gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head feature/trigger-check-1 --title "Verify workflow trigger nr 1" --body "Trigger check"
 ```
 
-Confirm that opening the PR starts no run (the last run is still the previous one):
+Confirm that opening the PR starts a run with the `pull_request` event, which trains and evaluates only (`deploy` is skipped). In a dedicated terminal, watch it:
 
 ```powershell
-gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 3
+$runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --branch feature/trigger-check-1 --limit 1 --json databaseId --jq ".[0].databaseId"
+
+gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 ```
 
-Merge the PR and confirm that a new run starts:
+Check that the PR check passed:
+
+```powershell
+gh pr checks feature/trigger-check-1 --repo GiuseppePiscopo/gp-mlops-fundamentals
+```
+
+Merge the PR and confirm that a new run starts with the `push` event:
 
 ```powershell
 gh pr merge feature/trigger-check-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
@@ -311,45 +331,37 @@ git branch -D feature/trigger-check-1
 
 ### Degrade the model
 
-Reduce the Random Forest capacity so the model misses the gate (`n_estimators=50`, `max_depth=5` gives `R2` of about `0.73`), and merge it through a PR:
+Reduce the Random Forest capacity so the model misses the gate (`n_estimators=50`, `max_depth=5` gives `R2` of about `0.73`), and open a PR:
 
 ```powershell
 git fetch github
 
-git switch -c experiment/degrade-model-1 --no-track github/main
+git switch -c experiment/tune-model-1 --no-track github/main
 
 (Get-Content .\pipelines\gp-mof-capstone-job-rf.yml) -replace 'n_estimators: 100', 'n_estimators: 50' -replace 'max_depth: 10', 'max_depth: 5' | Set-Content .\pipelines\gp-mof-capstone-job-rf.yml
 
 git commit -am "test(repo): degrada intenzionalmente il modello"
 
-git push github experiment/degrade-model-1
+git push github experiment/tune-model-1
 
-gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head experiment/degrade-model-1 --title "Degrade model nr 1" --body "Gate failure test"
-
-gh pr merge experiment/degrade-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
+gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head experiment/tune-model-1 --title "Tune model parameters nr 1" --body "Gate failure test, then fix"
 ```
 
-Sync the local `main` and delete the branch:
+In a dedicated terminal, watch the PR run, and confirm that `train-and-evaluate` fails at the "Evaluate and gate" step:
 
 ```powershell
-git switch main
-
-git pull github main
-
-git branch -D experiment/degrade-model-1
-```
-
-In a dedicated terminal, watch the run, and confirm that `train-and-evaluate` fails at the "Evaluate and gate" step and `deploy` is skipped:
-
-```powershell
-$runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 1 --json databaseId --jq ".[0].databaseId"
+$runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --branch experiment/tune-model-1 --limit 1 --json databaseId --jq ".[0].databaseId"
 
 gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 
 gh run view $runId --repo GiuseppePiscopo/gp-mlops-fundamentals --log-failed | Select-Object -Last 8
 ```
 
-Confirm that no new model version was registered, and that the deployed model hasn't changed:
+Confirm that the PR check failed (don't merge the PR), that no new model version was registered, and that the deployed model hasn't changed:
+
+```powershell
+gh pr checks experiment/tune-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals
+```
 
 ```cmd
 az ml model list --name gp-mof-capstone-model --query "[].{version:version, stage:tags.stage}" -o table
@@ -359,22 +371,30 @@ az ml online-deployment show --name blue --endpoint-name gp-mof-capstone-endpoin
 
 ### Restore the model
 
-Revert the degrading commit (the merge commit of the degrade PR) on a new branch, and merge it through a PR:
+Fix the same PR with parameters that pass the gate (`n_estimators=300`, `max_depth=20` gives `R2` of about `0.86`). Pushing to the PR branch restarts the check:
 
 ```powershell
-git fetch github
+(Get-Content .\pipelines\gp-mof-capstone-job-rf.yml) -replace 'n_estimators: 50', 'n_estimators: 300' -replace 'max_depth: 5', 'max_depth: 20' | Set-Content .\pipelines\gp-mof-capstone-job-rf.yml
 
-git switch -c fix/restore-model-1 --no-track github/main
+git commit -am "fix(repo): usa parametri che superano il gate"
 
-$degradeSha = gh pr view experiment/degrade-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --json mergeCommit --jq .mergeCommit.oid
+git push github experiment/tune-model-1
+```
 
-git revert --no-edit $degradeSha
+In a dedicated terminal, watch the new PR run (the latest one for the branch, not the failed one) until it passes:
 
-git push github fix/restore-model-1
+```powershell
+$runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --branch experiment/tune-model-1 --limit 1 --json databaseId --jq ".[0].databaseId"
 
-gh pr create --repo GiuseppePiscopo/gp-mlops-fundamentals --base main --head fix/restore-model-1 --title "Restore model nr 1" --body "Restore the baseline Random Forest parameters"
+gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 
-gh pr merge fix/restore-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
+gh pr checks experiment/tune-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals
+```
+
+Merge the PR:
+
+```powershell
+gh pr merge experiment/tune-model-1 --repo GiuseppePiscopo/gp-mlops-fundamentals --squash --admin --delete-branch
 ```
 
 Sync the local `main` and delete the branch:
@@ -384,13 +404,13 @@ git switch main
 
 git pull github main
 
-git branch -D fix/restore-model-1
+git branch -D experiment/tune-model-1
 ```
 
-In a dedicated terminal, watch the run until `deploy` waits for approval, which confirms that the gate passed:
+In a dedicated terminal, watch the run started by the merge until `deploy` waits for approval, which confirms that the gate passed:
 
 ```powershell
-$runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --limit 1 --json databaseId --jq ".[0].databaseId"
+$runId = gh run list --repo GiuseppePiscopo/gp-mlops-fundamentals --workflow ml-pipeline.yml --event push --limit 1 --json databaseId --jq ".[0].databaseId"
 
 gh run watch $runId --repo GiuseppePiscopo/gp-mlops-fundamentals
 ```
