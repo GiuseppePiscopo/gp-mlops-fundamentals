@@ -17,8 +17,8 @@ inputs:
   training_data:
     type: uri_folder
     path: azureml:gp-mof-capstone-data:1
-  n_estimators: 100
-  max_depth: 10
+  n_estimators: 300
+  max_depth: 20
   fail_for_alert_test: false
 
 environment: azureml:gp-mof-capstone-env:2
