@@ -156,10 +156,10 @@ $userId = [long](gh api user --jq .id)
 @{ reviewers = @(@{ type = "User"; id = $userId }) } | ConvertTo-Json -Depth 4 -Compress | gh api --method PUT repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --input -
 ```
 
-Verify the protection rule:
+Verify the protection rule. The output must list your GitHub user as reviewer, e.g. `["GiuseppePiscopo"]`:
 
 ```powershell
-gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --jq ".protection_rules"
+gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/environments/production --jq '[.protection_rules[].reviewers[]?.reviewer.login]'
 ```
 
 ## Part 5: First pipeline run
@@ -265,10 +265,10 @@ Require a PR with one approving review, and the `train-and-evaluate` check passi
 } | ConvertTo-Json -Depth 4 | gh api --method PUT repos/GiuseppePiscopo/gp-mlops-fundamentals/branches/main/protection --input -
 ```
 
-Verify the protection:
+Verify the protection. The output must show `reviews` equal to `1`, `up_to_date` equal to `true`, and `train-and-evaluate` in `checks`:
 
 ```powershell
-gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/branches/main/protection --jq "{required_pull_request_reviews, required_status_checks}"
+gh api repos/GiuseppePiscopo/gp-mlops-fundamentals/branches/main/protection --jq "{reviews: .required_pull_request_reviews.required_approving_review_count, up_to_date: .required_status_checks.strict, checks: .required_status_checks.contexts}"
 ```
 
 A PR that changes nothing under `src/` or `pipelines/` doesn't run the workflow, so the check is never reported: merge it with `--admin`. If `main` moves after the check passed, update the PR branch (this restarts the check):
