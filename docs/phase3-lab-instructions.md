@@ -501,6 +501,22 @@ Verify that no role assignment is left:
 az role assignment list --assignee $appId --scope "/subscriptions/$subscriptionId/resourceGroups/gp-mof-rg-dev" -o table
 ```
 
+### Disable the workflow
+
+Disable the workflow so no push or manual launch starts a run while the access is reduced:
+
+```powershell
+gh workflow disable ml-pipeline.yml --repo GiuseppePiscopo/gp-mlops-fundamentals
+```
+
+Verify the workflow state. The output must show `disabled_manually`:
+
+```powershell
+gh workflow list --repo GiuseppePiscopo/gp-mlops-fundamentals --all
+```
+
+While the workflow is disabled, the required `train-and-evaluate` check isn't reported on PRs: merge them with `--admin`.
+
 ### Restore the access for GitHub Actions
 
 Before a new run, assign the role again:
@@ -514,6 +530,16 @@ az role assignment create --assignee $appId --role contributor --scope "/subscri
 ```
 
 Then recreate the endpoint as in "Recreate the managed online endpoint" in Part 1, and the blue deployment as in "Create the blue deployment" in Part 5.
+
+### Enable the workflow
+
+Enable the workflow again, and verify that the state is `active`:
+
+```powershell
+gh workflow enable ml-pipeline.yml --repo GiuseppePiscopo/gp-mlops-fundamentals
+
+gh workflow list --repo GiuseppePiscopo/gp-mlops-fundamentals --all
+```
 
 ### Remove the Azure access for GitHub Actions
 
